@@ -1,0 +1,51 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__shopify-dev-mcp__learn_shopify_api",
+      "WebFetch(domain:shopify.dev)",
+      "Bash(ls:*)",
+      "Bash(tree:*)",
+      "mcp__shopify-dev-mcp__search_docs_chunks",
+      "Bash(npx shopify app config use:*)",
+      "Bash(npx shopify app deploy:*)",
+      "Bash(fly deploy:*)",
+      "Bash(fly secrets list:*)",
+      "Bash(fly logs:*)",
+      "mcp__shopify-dev-mcp__fetch_full_docs",
+      "Bash(fly secrets set:*)",
+      "WebFetch(domain:www.rinfit.com)",
+      "WebSearch",
+      "Bash(node:*)",
+      "Bash(npm run typecheck:*)",
+      "Bash(flyctl auth whoami:*)",
+      "Bash(flyctl apps create:*)",
+      "Bash(flyctl apps list:*)",
+      "Bash(flyctl volumes create:*)",
+      "Bash(flyctl auth logout:*)",
+      "Bash(flyctl auth login:*)",
+      "Bash(flyctl secrets list:*)",
+      "Bash(test:*)",
+      "Bash(flyctl secrets set:*)",
+      "Bash(flyctl deploy:*)",
+      "Bash(flyctl logs:*)",
+      "Bash(flyctl status:*)",
+      "Bash(curl:*)",
+      "Bash(flyctl machine list:*)",
+      "Bash(flyctl ssh console:*)",
+      "Bash(npm run deploy:*)",
+      "WebFetch(domain:community.shopify.dev)",
+      "Bash(tail:*)",
+      "Bash(xargs grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(npx prisma:*)",
+      "WebFetch(domain:eq8szvslb9u3dvro-14718740.shopifypreview.com)",
+      "WebFetch(domain:rinfit.com)",
+      "WebFetch(domain:docs.anthropic.com)"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "shopify-dev-mcp"
+  ]
+}
