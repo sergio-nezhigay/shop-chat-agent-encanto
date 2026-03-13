@@ -1,13 +1,12 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "YOUR_CLIENT_ID"
+client_id = "7d4eb2ae8eefe78580d7c85ec532b560"
 name = "encanto-chat-agent"
 handle = "encanto-chat-agent"
 application_url = "https://shop-chat-agent-encanto-prod.fly.dev"
 embedded = true
 
 [build]
-include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-04"
