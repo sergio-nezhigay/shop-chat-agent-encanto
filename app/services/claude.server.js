@@ -5,11 +5,11 @@
 import { Anthropic } from "@anthropic-ai/sdk";
 import AppConfig from "./config.server";
 import systemPrompts from "../prompts/prompts.json";
-import { ringSizingGuide } from "../prompts/knowledge/ring-sizing-standard";
+import { makeupConsultantGuide } from "../prompts/knowledge/makeup-consultant-guide";
 import { faqKnowledgeBase } from "../prompts/knowledge/faq";
 
-const ringSizingVariants = {
-  standard: ringSizingGuide,
+const makeupConsultantVariants = {
+  standard: makeupConsultantGuide,
 };
 
 /**
@@ -96,7 +96,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       behavioralRules: config.behavioralRules ?? "",
       examples: config.examples ?? "",
       formattingGuidelines: config.formattingGuidelines,
-      ringSizingGuide: ringSizingVariants.standard,
+      makeupConsultantGuide: makeupConsultantVariants.standard,
       faqKnowledgeBase,
     };
 

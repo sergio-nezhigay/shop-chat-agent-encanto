@@ -12,24 +12,24 @@
   // ---------------------------------------------------------------------------
 
   const FAQ_STARTERS = [
-    { label: "Shipping & Fulfilment time", nodeId: "shipping" },
-    { label: "Return and Exchange Policy", nodeId: "returns" },
-    { label: "Ring Size Guide",            nodeId: "ring_size" },
-    { label: "Order Assistance",           nodeId: "order_assistance" },
+    { label: "Shipping & Delivery", nodeId: "shipping" },
+    { label: "Returns & Exchanges", nodeId: "returns" },
+    { label: "Professional Consultant", nodeId: "makeup_consultant" },
+    { label: "Order Help", nodeId: "order_assistance" },
   ];
 
   const FAQ_FLOW = {
     shipping: {
-      message: "**Shipping & Fulfilment**\n\nWe aim to dispatch all orders within 1–3 business days. Standard delivery takes 5–10 business days; express options are available at checkout.\n\nWhat would you like to know more about?",
+      message: "**Shipping & Delivery**\n\nWe provide free standard shipping on all orders over $100. Standard delivery typically takes 5–7 business days. International shipping is also available (10-21 days).\n\nWhat would you like to know more about?",
       quickReplies: [
         { label: "Track my order",        nextId: "shipping_track" },
         { label: "International shipping", nextId: "shipping_intl" },
-        { label: "Shipping delays",        nextId: "shipping_delay" },
+        { label: "Shipping costs",        nextId: "shipping_delay" },
         { label: "Back to main topics",    nextId: "__restart" },
       ],
     },
     shipping_track: {
-      message: "**Tracking Your Order**\n\nOnce your order ships you'll receive a confirmation email with a tracking link. Tracking updates may take up to 24 hours to appear after dispatch.\n\nFor real-time order status, our AI assistant can look up your order directly!",
+      message: "**Tracking Your Order**\n\nOnce your order ships, you'll receive a confirmation email with a tracking link. Tracking updates may take up to 24 hours to appear.\n\nFor real-time order status, our AI assistant can look up your order directly!",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
         { label: "Back to shipping",     nextId: "shipping" },
@@ -37,15 +37,14 @@
       ],
     },
     shipping_intl: {
-      message: "**International Shipping**\n\nWe ship to most countries worldwide. International delivery typically takes 10–20 business days depending on your location.\n\nPlease note:\n- Customs duties and import taxes are the buyer's responsibility\n- Some remote areas may have extended delivery times\n- We provide tracking on all international orders",
+      message: "**International Shipping**\n\nWe ship worldwide! International delivery typically takes 10–21 business days depending on your location.\n\nPlease note:\n- Customs duties are the buyer's responsibility\n- We provide tracking on all international orders",
       quickReplies: [
         { label: "Track my order",      nextId: "shipping_track" },
-        { label: "Shipping delays",     nextId: "shipping_delay" },
         { label: "Back to main topics", nextId: "__restart" },
       ],
     },
     shipping_delay: {
-      message: "**Shipping Delays**\n\nIf your order hasn't arrived within the expected timeframe, here's what to do:\n\n- Check your tracking link for the latest status\n- Allow an extra 3–5 business days during busy periods\n- Contact us if your order is more than 7 days overdue\n\nOur AI assistant can help you check your order status right now!",
+      message: "**Shipping Costs**\n\nStandard shipping is free for orders over $100. For smaller orders, a small fee applies and will be shown during checkout.\n\nOur AI assistant can help you check specific costs or order status right now!",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
         { label: "Track my order",       nextId: "shipping_track" },
@@ -54,7 +53,7 @@
     },
 
     returns: {
-      message: "**Return & Exchange Policy**\n\nWe accept returns within 30 days of delivery for most items in their original, unworn condition.\n\nWhat would you like to know?",
+      message: "**Returns & Exchanges**\n\nWe accept returns for unused items within 14 days for a full refund. Exchanges are available within 30 days.\n\nWhat would you like to know?",
       quickReplies: [
         { label: "How to start a return", nextId: "returns_process" },
         { label: "Refund timeline",       nextId: "returns_refund" },
@@ -63,7 +62,7 @@
       ],
     },
     returns_process: {
-      message: "**Starting a Return**\n\nTo initiate a return:\n\n1. Contact us within 30 days of delivery\n2. Provide your order number and reason for return\n3. We'll email you a prepaid return label\n4. Pack the item securely in its original packaging\n5. Drop off at your nearest post office\n\nCustomised or engraved items cannot be returned unless faulty.",
+      message: "**Starting a Return**\n\nTo initiate a return:\n\n1. Contact us within 14 days of delivery\n2. Provide your order number\n3. Pack the item securely in its original packaging\n4. Drop off at your nearest post office\n\nContact support@encantoshop.es to receive return instructions.",
       quickReplies: [
         { label: "Refund timeline",      nextId: "returns_refund" },
         { label: "Ask the AI assistant", nextId: null },
@@ -71,15 +70,14 @@
       ],
     },
     returns_refund: {
-      message: "**Refund Timeline**\n\nOnce we receive your returned item:\n\n- Inspection takes 1–3 business days\n- Refunds are issued to your original payment method\n- Allow 5–10 business days for the funds to appear\n\nYou'll receive an email confirmation when your refund is processed.",
+      message: "**Refund Timeline**\n\nOnce we receive and inspect your item (1–3 business days), refunds are issued to your original payment method. Allow 5–10 business days for the funds to appear.\n\nYou'll receive an email confirmation when processed.",
       quickReplies: [
         { label: "Exchange an item",      nextId: "returns_exchange" },
-        { label: "How to start a return", nextId: "returns_process" },
         { label: "Back to main topics",   nextId: "__restart" },
       ],
     },
     returns_exchange: {
-      message: "**Exchanging an Item**\n\nWe're happy to exchange items for a different size or style.\n\nTo request an exchange:\n- Contact us within 30 days of delivery\n- Let us know your order number and the item you'd like instead\n- We'll hold your new item while we process the return\n\nIf the new item costs more, we'll send a payment link for the difference.",
+      message: "**Exchanging an Item**\n\nWe offer exchanges within 30 days of delivery. Contact us with your order number and the product you'd like instead.\n\nWe'll send a payment link if the new item has a higher price.",
       quickReplies: [
         { label: "How to start a return", nextId: "returns_process" },
         { label: "Ask the AI assistant",  nextId: null },
@@ -87,78 +85,50 @@
       ],
     },
 
-    ring_size: {
-      message: "**Ring Size Guide**\n\nFinding your perfect ring size is important! What would you like help with?",
+    makeup_consultant: {
+      message: "**Professional Consultant**\n\nGet a personalized beauty recommendation! Are you a makeup beginner or a professional?",
       quickReplies: [
-        { label: "Size chart",             nextId: "ring_size_chart" },
-        { label: "How to measure my finger", nextId: "ring_size_tips" },
-        { label: "I'm between two sizes",  nextId: "ring_size_between" },
+        { label: "I am a beginner",        nextId: "consultant_needs" },
+        { label: "I am a professional",    nextId: "consultant_needs" },
         { label: "Back to main topics",    nextId: "__restart" },
       ],
     },
-    ring_size_chart: {
-      message: "**Ring Size Chart**\n\n| US Size | Circumference | Diameter |\n|---------|--------------|----------|\n| 3 | 44.3 mm | 14.1 mm |\n| 4 | 46.5 mm | 14.8 mm |\n| 5 | 49.4 mm | 15.7 mm |\n| 6 | 51.9 mm | 16.5 mm |\n| 7 | 54.4 mm | 17.3 mm |\n| 8 | 57.0 mm | 18.1 mm |\n| 9 | 59.5 mm | 19.0 mm |\n| 10 | 62.1 mm | 19.8 mm |\n| 11 | 64.6 mm | 20.6 mm |\n| 12 | 67.2 mm | 21.3 mm |\n| 13 | 69.7 mm | 22.2 mm |\n| 14 | 72.3 mm | 23.0 mm |\n| 15 | 74.8 mm | 23.8 mm |\n| 16 | 77.3 mm | 24.6 mm |\n\nMeasure the inner circumference of a ring that fits well, or wrap a thin strip of paper around your finger.",
+    consultant_needs: {
+      message: "**What are you looking for?**\n\nOur professional consultant can recommend a curated kit for you. Tell us about your needs:",
       quickReplies: [
-        { label: "How to measure my finger", nextId: "ring_size_tips" },
-        { label: "I'm between two sizes",    nextId: "ring_size_between" },
-        { label: "Back to main topics",      nextId: "__restart" },
-      ],
-    },
-    ring_size_tips: {
-      message: "**How to Measure Your Finger**\n\n- Measure at the end of the day when fingers are slightly larger\n- Avoid measuring when fingers are cold or swollen\n- Wrap a thin strip of paper around the base of your finger\n- Mark where it overlaps and measure the length in millimetres\n- Compare to our size chart\n\n**Tip:** If your knuckle is larger than the base of your finger, size up and use a ring adjuster.",
-      quickReplies: [
-        { label: "Size chart",             nextId: "ring_size_chart" },
-        { label: "I'm between two sizes",  nextId: "ring_size_between" },
-        { label: "Back to main topics",    nextId: "__restart" },
-      ],
-    },
-    ring_size_between: {
-      message: "**Between Two Sizes?**\n\nIf you're between sizes, here's our advice:\n\n- For slim bands (under 4 mm): choose the smaller size\n- For wide bands (6 mm or more): choose the larger size\n- For everyday rings: size up for comfort\n\nStill unsure? Our AI assistant can help you find the right fit for a specific style!",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Size chart",           nextId: "ring_size_chart" },
-        { label: "Back to main topics",  nextId: "__restart" },
+        { label: "Natural everyday look",  nextId: null },
+        { label: "Special occasion look",  nextId: null },
+        { label: "Brow shaping/care",      nextId: null },
+        { label: "Ask the assistant",      nextId: null },
       ],
     },
 
     order_assistance: {
-      message: "**Order Assistance**\n\nHow can we help with your order?",
+      message: "**Order Help**\n\nHow can we help with your order?",
       quickReplies: [
         { label: "Check order status",        nextId: "order_status" },
         { label: "Change or cancel an order", nextId: "order_change" },
-        { label: "Received the wrong item",   nextId: "order_wrong_item" },
-        { label: "Item arrived damaged",      nextId: "order_damaged" },
+        { label: "Problem with order",        nextId: "order_problem" },
       ],
     },
     order_status: {
-      message: "**Check Order Status**\n\nOur AI assistant can look up your order status in real time! Just ask:\n\n\"What's the status of my order?\"\n\nYou may need to log in so we can securely access your order information.",
+      message: "**Check Order Status**\n\nOur AI assistant can look up your order status in real time! Just ask:\n\n\"What's the status of my order?\"",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
     order_change: {
-      message: "**Change or Cancel an Order**\n\nWe can make changes to your order within **1 hour** of placing it.\n\nAfter that, your order may already be in production or dispatched.\n\nOur AI assistant can check your order details and advise what's possible right now.",
+      message: "**Change or Cancel**\n\nWe can make changes within 1 hour of placement. After that, your order may already be processed.\n\nAsk our AI for immediate help!",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
-    order_wrong_item: {
-      message: "**Received the Wrong Item?**\n\nWe're so sorry about that! Please:\n\n1. Take a photo of the item you received\n2. Note your order number\n3. Contact us — we'll arrange a replacement or refund immediately\n\nOur AI assistant can start this process for you right now.",
+    order_problem: {
+      message: "**Problem with Order?**\n\nWe're here to help! Please contact support@encantoshop.es with your order number and any photos if the item is damaged or wrong.",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
-        { label: "Back to main topics",  nextId: "__restart" },
-      ],
-    },
-    order_damaged: {
-      message: "**Item Arrived Damaged?**\n\nWe take great care with packaging, but sometimes damage occurs in transit. Here's what to do:\n\n1. Take clear photos of the damage and packaging\n2. Note your order number\n3. Contact us within 48 hours of delivery\n\nWe'll send a replacement or issue a full refund — no need to return the damaged item.",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to order help",   nextId: "order_assistance" },
         { label: "Back to main topics",  nextId: "__restart" },
       ],
     },
