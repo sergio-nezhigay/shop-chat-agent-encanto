@@ -14,8 +14,6 @@
   const FAQ_STARTERS = [
     { label: "Shipping & Delivery", nodeId: "shipping" },
     { label: "Returns & Exchanges", nodeId: "returns" },
-    { label: "Professional Consultant", nodeId: "makeup_consultant" },
-    { label: "Order Help", nodeId: "order_assistance" },
   ];
 
   const FAQ_FLOW = {
@@ -85,53 +83,6 @@
       ],
     },
 
-    makeup_consultant: {
-      message: "**Professional Consultant**\n\nGet a personalized beauty recommendation! Are you a makeup beginner or a professional?",
-      quickReplies: [
-        { label: "I am a beginner",        nextId: "consultant_needs" },
-        { label: "I am a professional",    nextId: "consultant_needs" },
-        { label: "Back to main topics",    nextId: "__restart" },
-      ],
-    },
-    consultant_needs: {
-      message: "**What are you looking for?**\n\nOur professional consultant can recommend a curated kit for you. Tell us about your needs:",
-      quickReplies: [
-        { label: "Natural everyday look",  nextId: null },
-        { label: "Special occasion look",  nextId: null },
-        { label: "Brow shaping/care",      nextId: null },
-        { label: "Ask the assistant",      nextId: null },
-      ],
-    },
-
-    order_assistance: {
-      message: "**Order Help**\n\nHow can we help with your order?",
-      quickReplies: [
-        { label: "Check order status",        nextId: "order_status" },
-        { label: "Change or cancel an order", nextId: "order_change" },
-        { label: "Problem with order",        nextId: "order_problem" },
-      ],
-    },
-    order_status: {
-      message: "**Check Order Status**\n\nOur AI assistant can look up your order status in real time! Just ask:\n\n\"What's the status of my order?\"",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to main topics",  nextId: "__restart" },
-      ],
-    },
-    order_change: {
-      message: "**Change or Cancel**\n\nWe can make changes within 1 hour of placement. After that, your order may already be processed.\n\nAsk our AI for immediate help!",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to main topics",  nextId: "__restart" },
-      ],
-    },
-    order_problem: {
-      message: "**Problem with Order?**\n\nWe're here to help! Please contact support@encantoshop.es with your order number and any photos if the item is damaged or wrong.",
-      quickReplies: [
-        { label: "Ask the AI assistant", nextId: null },
-        { label: "Back to main topics",  nextId: "__restart" },
-      ],
-    },
   };
 
   // ---------------------------------------------------------------------------
