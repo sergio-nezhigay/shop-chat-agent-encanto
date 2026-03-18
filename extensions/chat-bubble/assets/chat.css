@@ -4,7 +4,7 @@
 
 .shop-ai-chat-container {
   position: fixed;
-  bottom: 100px;
+  bottom: 20px;
   right: 20px;
   z-index: 9999;
   font-family: 'Montserrat', sans-serif;
@@ -665,7 +665,7 @@
   cursor: pointer;
   letter-spacing: 0.02em;
   transition: all 0.2s ease;
-  width: 100%;
+  width: fit-content;
 }
 
 .shop-ai-flow-starter-btn:hover {
