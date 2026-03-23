@@ -112,7 +112,9 @@
           chatWindow: container.querySelector(".shop-ai-chat-window"),
           closeButton: container.querySelector(".shop-ai-chat-close"),
           chatInput: container.querySelector(".shop-ai-chat-input input"),
+          imageIcon: container.querySelector(".shop-ai-image-icon"),
           sendButton: container.querySelector(".shop-ai-chat-send"),
+          backButton: container.querySelector(".shop-ai-chat-back"),
           messagesContainer: container.querySelector(".shop-ai-chat-messages"),
         };
 
@@ -136,7 +138,9 @@
           chatBubble,
           closeButton,
           chatInput,
+          imageIcon,
           sendButton,
+          backButton,
           messagesContainer,
         } = this.elements;
 
@@ -146,11 +150,18 @@
         // Close chat window
         closeButton.addEventListener("click", () => this.closeChatWindow());
 
+        // Back to home button
+        backButton.addEventListener("click", () => this.resetToHome());
+
         // Send message when pressing Enter in input
         chatInput.addEventListener("keypress", (e) => {
           if (e.key === "Enter" && chatInput.value.trim() !== "") {
             ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
+
+            // Hide send button and show image icon after sending
+            sendButton.style.display = "none";
+            imageIcon.style.display = "flex";
 
             // On mobile, handle keyboard
             if (this.isMobile) {
@@ -166,10 +177,25 @@
             ShopAIChat.Flow.endFlow();
             ShopAIChat.Message.send(chatInput, messagesContainer);
 
+            // Hide send button and show image icon after sending
+            sendButton.style.display = "none";
+            imageIcon.style.display = "flex";
+
             // On mobile, focus input after sending
             if (this.isMobile) {
               setTimeout(() => chatInput.focus(), 300);
             }
+          }
+        });
+
+        // Toggle icons based on input content
+        chatInput.addEventListener("input", () => {
+          if (chatInput.value.trim() !== "") {
+            imageIcon.style.display = "none";
+            sendButton.style.display = "flex";
+          } else {
+            imageIcon.style.display = "flex";
+            sendButton.style.display = "none";
           }
         });
 
@@ -208,11 +234,14 @@
        * Toggle chat window visibility
        */
       toggleChatWindow: function () {
-        const { chatWindow, chatInput } = this.elements;
+        const { chatWindow, chatInput, chatBubble } = this.elements;
 
         chatWindow.classList.toggle("active");
 
         if (chatWindow.classList.contains("active")) {
+          // Hide bubble when window is active
+          if (chatBubble) chatBubble.classList.add("hidden");
+
           // On mobile, prevent body scrolling and delay focus
           if (this.isMobile) {
             document.body.classList.add("shop-ai-chat-open");
@@ -223,6 +252,9 @@
           // Always scroll messages to bottom when opening
           this.scrollToBottom();
         } else {
+          // Show bubble when window is hidden
+          if (chatBubble) chatBubble.classList.remove("hidden");
+
           // Remove body class when closing
           document.body.classList.remove("shop-ai-chat-open");
         }
@@ -232,15 +264,61 @@
        * Close chat window
        */
       closeChatWindow: function () {
-        const { chatWindow, chatInput } = this.elements;
+        const { chatWindow, chatInput, chatBubble } = this.elements;
 
         chatWindow.classList.remove("active");
+        if (chatBubble) chatBubble.classList.remove("hidden");
 
         // On mobile, blur input to hide keyboard and enable body scrolling
         if (this.isMobile) {
           chatInput.blur();
           document.body.classList.remove("shop-ai-chat-open");
         }
+      },
+
+      /**
+       * Mark that interaction has started (removes initial gradient background)
+       */
+      markInteractionStarted: function () {
+        const { chatWindow } = this.elements;
+        if (chatWindow) {
+          chatWindow.classList.remove("initial-state");
+        }
+      },
+
+      /**
+       * Reset chat to initial home state
+       */
+      resetToHome: function () {
+        const { chatWindow, messagesContainer } = this.elements;
+
+        // Reset UI state
+        if (chatWindow) {
+          chatWindow.classList.add("initial-state");
+        }
+
+        // Clear messages
+        if (messagesContainer) {
+          messagesContainer.innerHTML = "";
+        }
+
+        // End any active flow
+        ShopAIChat.Flow.endFlow();
+
+        // Clear conversation storage
+        sessionStorage.removeItem("shopAiConversationId");
+        sessionStorage.removeItem("shopAiLastMessage");
+
+        // Re-initialize with welcome message and starters
+        const welcomeMessage =
+          window.shopChatConfig?.welcomeMessage ||
+          "👋 Hi there! How can I help you today?";
+        ShopAIChat.Message.add(
+          welcomeMessage,
+          "assistant",
+          messagesContainer,
+        );
+        ShopAIChat.Flow.showStarters();
       },
 
       /**
@@ -331,6 +409,9 @@
       send: async function (chatInput, messagesContainer) {
         const userMessage = chatInput.value.trim();
         const conversationId = sessionStorage.getItem("shopAiConversationId");
+
+        // Remove initial gradient state when conversation starts
+        ShopAIChat.UI.markInteractionStarted();
 
         // Add user message to chat
         this.add(userMessage, "user", messagesContainer);
@@ -1193,6 +1274,7 @@
        */
       handleQuickReply: function (label, nextId) {
         this._removeQuickReplies();
+        ShopAIChat.UI.markInteractionStarted();
         if (nextId === null) {
           ShopAIChat.Message.add(label, "user");
           ShopAIChat.Message.add(
@@ -1247,6 +1329,12 @@
           this.UI.elements.messagesContainer,
         );
       } else {
+        // Set initial state (gradient background + logo)
+        const { chatWindow } = this.UI.elements;
+        if (chatWindow) {
+          chatWindow.classList.add("initial-state");
+        }
+
         // No previous conversation, show welcome message
         const welcomeMessage =
           window.shopChatConfig?.welcomeMessage ||
