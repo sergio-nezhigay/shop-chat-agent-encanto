@@ -19,7 +19,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: rgba(22, 22, 22, 0.16) 0px 2px 4px 0px;
+  box-shadow: rgba(0, 0, 0, 0.28) 0px 4px 12px 0px;
   transition: transform 200ms ease-out, opacity 200ms ease-out, visibility 200ms ease-out;
   position: relative;
   overflow: hidden;
@@ -40,19 +40,19 @@
 }
 
 .shop-ai-bubble-layer-0 {
-  background: radial-gradient(circle, rgb(255, 255, 255) 0%, rgb(245, 229, 225) 50%, rgba(213, 185, 184, 0.4) 100%);
+  background: radial-gradient(circle, rgb(40, 40, 40) 0%, rgb(15, 15, 15) 60%, rgba(0, 0, 0, 1) 100%);
   backdrop-filter: blur(8px);
   z-index: 0;
 }
 
 .shop-ai-bubble-layer-1 {
-  background: conic-gradient(from 131deg, rgba(245, 229, 225, 0.6) 0deg, rgba(176, 122, 120, 0.1) 182.783deg, rgba(245, 229, 225, 0.6) 360deg);
+  background: conic-gradient(from 131deg, rgba(201, 169, 110, 0.2) 0deg, rgba(201, 169, 110, 0.05) 182.783deg, rgba(201, 169, 110, 0.2) 360deg);
   z-index: 1;
 }
 
 .shop-ai-bubble-layer-2 {
   inset: 4px;
-  background: radial-gradient(circle, rgba(245, 229, 225, 0.6) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(201, 169, 110, 0.15) 0%, transparent 70%);
   filter: blur(8px);
   z-index: 2;
 }
@@ -106,7 +106,7 @@
 }
 
 .shop-ai-chat-window.initial-state {
-  background: linear-gradient(135deg, #F5E5E1 0%, #E8D6D2 100%);
+  background: linear-gradient(135deg, #FAF8F3 0%, #F2EDE4 100%);
 }
 
 .shop-ai-chat-window.initial-state .shop-ai-chat-header {
@@ -122,7 +122,7 @@
   padding: 0;
   text-align: center;
   margin: 0 auto;
-  animation: logoAppear 1.2s ease-out;
+  animation: logoAppear 1.2s ease-out forwards;
   pointer-events: none;
   z-index: 0;
 }
@@ -143,7 +143,7 @@
   font-size: 28px;
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: #b07a78;
+  color: #121212;
   opacity: 0.85;
   display: block;
 }
@@ -154,7 +154,7 @@
     transform: scale(0.95);
   }
   to {
-    opacity: 0.8;
+    opacity: 0.38;
     transform: scale(1);
   }
 }
@@ -272,8 +272,8 @@
 }
 
 .shop-ai-chat-window.initial-state .shop-ai-chat-close {
-  background: rgba(255, 255, 255, 0.5);
-  border-color: rgba(0, 0, 0, 0.05);
+  background: rgba(255, 255, 255, 0.82);
+  border-color: rgba(0, 0, 0, 0.12);
   box-shadow: none;
 }
 
@@ -324,6 +324,11 @@
   align-self: flex-start;
   background-color: rgba(255, 255, 255, 0.85);
   color: #1c1d1f;
+
+}
+
+.shop-ai-message.assistant {
+  border: 1px solid rgba(0, 0, 0, 0.07);
   border-bottom-left-radius: 4px;
 }
 
@@ -385,13 +390,13 @@
 
 .shop-ai-message.user {
   align-self: flex-end;
-  color: rgb(30, 36, 46);
-  background: linear-gradient(rgb(250, 250, 250) 0%, rgb(243, 244, 246) 100%);
+  color: #f8f8f8;
+  background: #121212;
   border-bottom-right-radius: 4px;
 }
 
 .shop-ai-message.user a {
-  color: #232222;
+  color: #f8f8f8;
   text-decoration: underline;
   font-weight: 500;
 }
@@ -453,7 +458,7 @@
 }
 
 .shop-ai-chat-input {
-  border: 1px solid #E1E1E1;
+  border: 1px solid #D4CFC8;
   border-radius: 999px;
   margin: 12px 16px 16px;
   padding: 6px 12px 6px 16px;
@@ -465,8 +470,8 @@
 }
 
 .shop-ai-chat-input:focus-within {
-  border-color: rgba(245, 229, 225, 0.8);
-  box-shadow: 0px 0px 20px 0px rgba(245, 229, 225, 0.6);
+  border-color: rgba(201, 169, 110, 0.35);
+  box-shadow: 0px 0px 20px 0px rgba(201, 169, 110, 0.12);
 }
 
 .shop-ai-chat-input input {
@@ -539,7 +544,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #b07a78;
+  background-color: #C9A96E;
   display: inline-block;
   animation: typing 1.4s infinite both;
 }
@@ -806,8 +811,8 @@
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #858585;
-  border: 0.5px solid rgba(0, 0, 0, 0.05);
+  color: #333333;
+  border: 0.5px solid rgba(0, 0, 0, 0.14);
   border-radius: 999px;
   padding: 12px 20px;
   min-height: auto;
@@ -849,7 +854,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #1c1d1f;
-  border: 0.5px solid rgba(0, 0, 0, 0.05);
+  border: 0.5px solid rgba(0, 0, 0, 0.14);
   border-radius: 999px;
   padding: 10px 18px;
   font-size: 14px;
