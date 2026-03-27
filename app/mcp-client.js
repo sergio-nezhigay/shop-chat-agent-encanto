@@ -145,6 +145,17 @@ class MCPClient {
         "Content-Type": "application/json"
       };
 
+      // [CART_DEBUG] Log MCP request context for cart tools
+      const isCartStorefrontTool = /cart|add_item|update_cart|checkout/i.test(toolName);
+      if (isCartStorefrontTool) {
+        console.log('[CART_DEBUG] Storefront MCP request:', {
+          toolName,
+          endpoint: this.storefrontMcpEndpoint,
+          headers: JSON.stringify(headers),
+          cartIdInArgs: toolArgs?.cartId || toolArgs?.cart_id || 'MISSING — no cart context',
+        });
+      }
+
       const response = await this._makeJsonRpcRequest(
         this.storefrontMcpEndpoint,
         "tools/call",
@@ -154,6 +165,19 @@ class MCPClient {
         },
         headers
       );
+
+      // [CART_DEBUG] Log raw MCP response for cart tools
+      if (isCartStorefrontTool) {
+        const raw = JSON.stringify(response).slice(0, 1000);
+        const urlMatch = raw.match(/https?:\/\/[^\\"]+(?:\/cart|checkout)[^\\"]+/i);
+        const cartIdMatch = raw.match(/"(?:cartId|cart_id|id)"\s*:\s*"([^"]+)"/i);
+        console.log('[CART_DEBUG] Storefront MCP response:', {
+          toolName,
+          cartIdFound: cartIdMatch ? cartIdMatch[1] : 'none',
+          checkoutUrl: urlMatch ? urlMatch[0] : 'none',
+          responseSnippet: raw,
+        });
+      }
 
       return response.result || response;
     } catch (error) {

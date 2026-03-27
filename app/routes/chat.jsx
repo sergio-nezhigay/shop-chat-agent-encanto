@@ -87,6 +87,7 @@ async function handleChatRequest(request) {
   try {
     // Get message data from request body
     const body = await request.json();
+    console.log('[CART_DEBUG] cart_token received:', body.cart_token || 'none');
     const userMessage = body.message;
 
     // Validate required message
@@ -100,6 +101,7 @@ async function handleChatRequest(request) {
     // Generate or use existing conversation ID
     const conversationId = body.conversation_id || Date.now().toString();
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
+    const cartGid = body.cart_token ? `gid://shopify/Cart/${body.cart_token}` : null;
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -108,6 +110,7 @@ async function handleChatRequest(request) {
         userMessage,
         conversationId,
         promptType,
+        cartGid,
         stream,
       });
     });
@@ -138,6 +141,7 @@ async function handleChatSession({
   userMessage,
   conversationId,
   promptType,
+  cartGid,
   stream,
 }) {
   // Initialize services
@@ -254,6 +258,7 @@ async function handleChatSession({
           messages: conversationHistory,
           promptType,
           tools: mcpClient.tools,
+          cartGid,
         },
         {
           // Handle text chunks
@@ -289,6 +294,16 @@ async function handleChatSession({
             const toolArgs = content.input;
             const toolUseId = content.id;
 
+            // [CART_DEBUG] Flag cart-relevant tool calls
+            const isCartTool = /cart|add_item|update_cart|checkout/i.test(toolName);
+            if (isCartTool) {
+              console.log('[CART_DEBUG] Cart tool called:', {
+                toolName,
+                toolArgs: JSON.stringify(toolArgs),
+                cartIdInArgs: toolArgs?.cartId || toolArgs?.cart_id || toolArgs?.id || 'MISSING',
+              });
+            }
+
             if (SEND_TOOL_USE_EVENTS) {
               const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
 
@@ -303,6 +318,17 @@ async function handleChatSession({
               toolName,
               toolArgs,
             );
+
+            // [CART_DEBUG] Cart tool response
+            if (isCartTool) {
+              const snippet = JSON.stringify(toolUseResponse).slice(0, 800);
+              const urlMatch = snippet.match(/https?:\/\/[^\\"]+(?:\/cart|checkout)[^\\"]+/i);
+              console.log('[CART_DEBUG] Cart tool response:', {
+                toolName,
+                checkoutUrl: urlMatch ? urlMatch[0] : 'none found',
+                responseSnippet: snippet,
+              });
+            }
 
             // Handle tool response based on success/error
             if (toolUseResponse.error) {

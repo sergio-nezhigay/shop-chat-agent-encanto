@@ -689,10 +689,26 @@
         try {
           const promptType =
             window.shopChatConfig?.promptType || "standardAssistant";
+
+          // Fetch customer's current cart token so the AI operates on the existing cart
+          let cartToken = null;
+          try {
+            const cartResp = await fetch('/cart.js');
+            if (cartResp.ok) {
+              const cartData = await cartResp.json();
+              cartToken = cartData.token || null;
+            }
+          } catch(e) {}
+          console.log('[CART_DEBUG] Browser cart at send time:', {
+            ajax_cart_token: cartToken || 'none',
+            conversation_id: conversationId
+          });
+
           const requestBody = JSON.stringify({
             message: userMessage,
             conversation_id: conversationId,
             prompt_type: promptType,
+            cart_token: cartToken,
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";
@@ -797,6 +813,16 @@
                 messagesContainer,
               );
               msgEl.classList.add("shop-ai-fade-in");
+              // [CART_DEBUG] Check AI response for cart/checkout URLs
+              const cartUrlMatch = streamState.accumulatedText.match(/https?:\/\/[^\s"')]+(?:\/cart|checkout)[^\s"')]+/i);
+              if (cartUrlMatch) {
+                const tokenMatch = cartUrlMatch[0].match(/[?&]cart=([a-f0-9]+)/i) || cartUrlMatch[0].match(/\/cart\/([a-f0-9]+)/i);
+                console.log('[CART_DEBUG] AI response cart URL:', {
+                  url: cartUrlMatch[0],
+                  token: tokenMatch ? tokenMatch[1] : 'not parseable',
+                  conversation_id: sessionStorage.getItem('shopAiConversationId')
+                });
+              }
               streamState.accumulatedText = "";   // clear so new_message won't re-render it
             }
             break;
