@@ -41,7 +41,8 @@
       "Bash(npx prisma:*)",
       "WebFetch(domain:eq8szvslb9u3dvro-14718740.shopifypreview.com)",
       "WebFetch(domain:rinfit.com)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "WebFetch(domain:github.com)"
     ]
   },
   "enableAllProjectMcpServers": true,
