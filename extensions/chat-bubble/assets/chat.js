@@ -699,10 +699,6 @@
               cartToken = cartData.token || null;
             }
           } catch(e) {}
-          console.log('[CART_DEBUG] Browser cart at send time:', {
-            ajax_cart_token: cartToken || 'none',
-            conversation_id: conversationId
-          });
 
           const requestBody = JSON.stringify({
             message: userMessage,
@@ -813,16 +809,6 @@
                 messagesContainer,
               );
               msgEl.classList.add("shop-ai-fade-in");
-              // [CART_DEBUG] Check AI response for cart/checkout URLs
-              const cartUrlMatch = streamState.accumulatedText.match(/https?:\/\/[^\s"')]+(?:\/cart|checkout)[^\s"')]+/i);
-              if (cartUrlMatch) {
-                const tokenMatch = cartUrlMatch[0].match(/[?&]cart=([a-f0-9]+)/i) || cartUrlMatch[0].match(/\/cart\/([a-f0-9]+)/i);
-                console.log('[CART_DEBUG] AI response cart URL:', {
-                  url: cartUrlMatch[0],
-                  token: tokenMatch ? tokenMatch[1] : 'not parseable',
-                  conversation_id: sessionStorage.getItem('shopAiConversationId')
-                });
-              }
               streamState.accumulatedText = "";   // clear so new_message won't re-render it
             }
             break;
