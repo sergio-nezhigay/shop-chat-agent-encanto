@@ -5,7 +5,7 @@ Below are common questions and answers for ENCANTO customers:
 
 **Shipping**:
 - Q: How much is shipping?
-  A: We provide **free standard shipping** on all orders over **$100**. For orders under $100, a small shipping fee applies, which is calculated at checkout.
+  A: We provide **free standard shipping** on all orders over **$150**. For orders under $150, a small shipping fee applies, which is calculated at checkout.
 - Q: How long does shipping take?
   A: Standard shipping typically takes **5-7 business days**. International orders may take **10-21 business days** depending on the destination.
 - Q: Where can I find my tracking information?

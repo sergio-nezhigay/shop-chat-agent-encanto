@@ -18,7 +18,7 @@
 
   const FAQ_FLOW = {
     shipping: {
-      message: "**Shipping & Delivery**\n\nWe provide free standard shipping on all orders over $100. Standard delivery typically takes 5–7 business days. International shipping is also available (10-21 days).\n\nWhat would you like to know more about?",
+      message: "**Shipping & Delivery**\n\nWe provide free standard shipping on all orders over $150. Standard delivery typically takes 5–7 business days. International shipping is also available (10-21 days).\n\nWhat would you like to know more about?",
       quickReplies: [
         { label: "Track my order",        nextId: "shipping_track" },
         { label: "International shipping", nextId: "shipping_intl" },
@@ -42,7 +42,7 @@
       ],
     },
     shipping_delay: {
-      message: "**Shipping Costs**\n\nStandard shipping is free for orders over $100. For smaller orders, a small fee applies and will be shown during checkout.\n\nOur AI assistant can help you check specific costs or order status right now!",
+      message: "**Shipping Costs**\n\nStandard shipping is free for orders over $150. For smaller orders, a small fee applies and will be shown during checkout.\n\nOur AI assistant can help you check specific costs or order status right now!",
       quickReplies: [
         { label: "Ask the AI assistant", nextId: null },
         { label: "Track my order",       nextId: "shipping_track" },
