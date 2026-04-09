@@ -26,4 +26,16 @@ Below are common questions and answers for ENCANTO customers:
 **Payment**:
 - Q: What payment methods do you accept?
   A: We accept all major credit cards (Visa, Mastercard, American Express), PayPal, Apple Pay, and Google Pay.
+
+**Discounts & Promotions**:
+- Q: Do you offer discount codes or promo codes?
+  A: We do not currently offer public discount codes or promotional codes. For any special pricing inquiries, reach out to **support@encantoshop.es**.
+
+**Loyalty Program**:
+- Q: Do you have a loyalty or rewards program?
+  A: We do not currently have a formal loyalty or rewards program. Contact **support@encantoshop.es** for any special offers or questions.
+
+**Product Usage**:
+- Q: How do I use the OME (Oil Mix Elixir)?
+  A: The **Pure Luxury Oil Mix Elixir (OME)** nourishes and conditions brow hairs and lashes. Apply a small amount directly to brows or lashes as part of your daily care routine. For detailed technique guidance, contact **support@encantoshop.es**.
 </faq_knowledge_base>`;
