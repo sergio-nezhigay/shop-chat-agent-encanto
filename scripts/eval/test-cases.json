@@ -1,0 +1,227 @@
+[
+  {
+    "id": "E01",
+    "category": "product",
+    "categoryLabel": "Product Questions",
+    "question": "What types of brushes do you sell?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO sells professional makeup brushes including foundation, powder, contouring, and eyeshadow brushes in materials such as fox fur, goat hair, and synthetic taklon.",
+    "notes": "Should mention brush types and materials from the consultant guide. Must NOT invent prices or materials not listed."
+  },
+  {
+    "id": "E02",
+    "category": "product",
+    "categoryLabel": "Product Questions",
+    "question": "Which eyeshadow palette collections do you carry?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO carries the Vintage, Enigma, and Barocco eyeshadow palette collections with finishes including matte, satin, and multichrome.",
+    "notes": "Must name actual collections. Must not invent collections like 'Aurora' or 'Eclipse'."
+  },
+  {
+    "id": "E03",
+    "category": "product",
+    "categoryLabel": "Product Questions",
+    "question": "What brow products do you have?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO offers mechanical powder pencils in shades Granite, Ice Blond, and Taupe; fixing waxes CTR F5 and F15P; brow brushes; and the OME (Oil Mix Elixir) for brow and lash nourishment.",
+    "notes": "Should cite specific shade names and wax model numbers from the guide."
+  },
+  {
+    "id": "E04",
+    "category": "product",
+    "categoryLabel": "Product Questions",
+    "question": "Do you sell mascara or liquid foundation?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO specializes in professional makeup tools and accessories — brushes, palettes, brow products, and tools. Mascara and liquid foundation are not part of the catalog.",
+    "notes": "Out-of-catalog question. Must answer honestly using only what is in the knowledge base. Should NOT invent products."
+  },
+  {
+    "id": "E05",
+    "category": "product",
+    "categoryLabel": "Product Questions",
+    "question": "What sponges and tools do you carry?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO carries professional makeup sponges (WaxPro and BB55) as well as tweezers (W1 and W5 models) and other professional tools.",
+    "notes": "Should reference specific product names from the catalog without inventing additional details."
+  },
+  {
+    "id": "E06",
+    "category": "consultation",
+    "categoryLabel": "Makeup Consultation",
+    "question": "I'm a beginner and want to start learning makeup. What do I need?",
+    "expectsEscalation": false,
+    "groundTruth": "For a beginner the consultant approach means assessing skill level (confirmed beginner), identifying needs (everyday look), then recommending a starter kit: a foundation brush, a neutral eyeshadow palette (e.g., Vintage), a brow pencil matched to hair color, and the OME elixir.",
+    "notes": "Should follow the consultation steps: assess, identify, recommend, explain. Should NOT immediately dump all products."
+  },
+  {
+    "id": "E07",
+    "category": "consultation",
+    "categoryLabel": "Makeup Consultation",
+    "question": "I'm a professional makeup artist. What would you recommend for editorial work?",
+    "expectsEscalation": false,
+    "groundTruth": "For a professional seeking editorial tools, recommend high-end brushes (contouring and eyeshadow sets in fox fur or goat hair), multichrome palettes (Enigma or Barocco), precision tweezers (W1 or W5), and professional sponges (WaxPro or BB55).",
+    "notes": "Should differentiate professional from beginner recommendation using catalog categories."
+  },
+  {
+    "id": "E08",
+    "category": "consultation",
+    "categoryLabel": "Makeup Consultation",
+    "question": "Which brush should I use for contouring?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO carries professional contouring brushes. For a more tailored recommendation the agent may assess skill level and desired look before suggesting a specific kit.",
+    "notes": "Should reference contouring brushes from catalog and optionally engage the consultation approach."
+  },
+  {
+    "id": "E09",
+    "category": "consultation",
+    "categoryLabel": "Makeup Consultation",
+    "question": "What is the OME elixir and how do I use it?",
+    "expectsEscalation": false,
+    "groundTruth": "The OME (Oil Mix Elixir) is an ENCANTO product used for brow and lash nourishment. It is applied to condition and strengthen brow hairs and lashes.",
+    "notes": "Should answer from what is in the guide without inventing application steps not documented."
+  },
+  {
+    "id": "E10",
+    "category": "consultation",
+    "categoryLabel": "Makeup Consultation",
+    "question": "What is the difference between the Enigma and Barocco palettes?",
+    "expectsEscalation": false,
+    "groundTruth": "Both Enigma and Barocco are eyeshadow palette collections from ENCANTO featuring multichrome and rich finishes. Specific differences between the two collections are not detailed in the available information.",
+    "notes": "Collections are named but not individually compared in the knowledge base. Correct response stays honest and does not invent differences."
+  },
+  {
+    "id": "E11",
+    "category": "shipping",
+    "categoryLabel": "Shipping",
+    "question": "Do you ship internationally?",
+    "expectsEscalation": false,
+    "groundTruth": "Yes, ENCANTO ships worldwide. International orders typically take 10–21 business days. Domestic orders arrive within 5–7 business days. Free standard shipping on orders over $150.",
+    "notes": "Direct FAQ answer. Must include international/domestic timeframes and the $150 free shipping threshold."
+  },
+  {
+    "id": "E12",
+    "category": "shipping",
+    "categoryLabel": "Shipping",
+    "question": "How long will my order take to arrive?",
+    "expectsEscalation": false,
+    "groundTruth": "Domestic orders arrive within 5–7 business days. International orders typically take 10–21 business days depending on destination.",
+    "notes": "Must use the exact timeframes from the FAQ. Must not invent different numbers."
+  },
+  {
+    "id": "E13",
+    "category": "shipping",
+    "categoryLabel": "Shipping",
+    "question": "How much does shipping cost?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO offers free standard shipping on all orders over $150. For orders under that threshold a shipping fee applies, typically calculated at checkout.",
+    "notes": "Must reference the $150 threshold. Must not invent a flat fee amount."
+  },
+  {
+    "id": "E14",
+    "category": "shipping",
+    "categoryLabel": "Shipping",
+    "question": "Can I track my order after it ships?",
+    "expectsEscalation": false,
+    "groundTruth": "Once the order ships, a tracking number is sent via email so customers can monitor delivery status.",
+    "notes": "Simple FAQ retrieval. Should not over-promise specific carrier integrations not mentioned."
+  },
+  {
+    "id": "E15",
+    "category": "returns",
+    "categoryLabel": "Returns & Exchanges",
+    "question": "What is your return policy?",
+    "expectsEscalation": false,
+    "groundTruth": "Unused items in original packaging can be returned within 14 days for a full refund. Exchanges for different colors or products are available within 30 days. Contact support@encantoshop.es to start the process.",
+    "notes": "Key numbers: 14 days return, 30 days exchange. Must provide the support email."
+  },
+  {
+    "id": "E16",
+    "category": "returns",
+    "categoryLabel": "Returns & Exchanges",
+    "question": "Can I exchange a brush for a different one?",
+    "expectsEscalation": false,
+    "groundTruth": "Yes, exchanges for different colors or products are available within 30 days of purchase. Contact support@encantoshop.es to start the exchange.",
+    "notes": "Should mention 30 days and provide the support email."
+  },
+  {
+    "id": "E17",
+    "category": "returns",
+    "categoryLabel": "Returns & Exchanges",
+    "question": "I want to return a palette I already opened and used — can I?",
+    "expectsEscalation": true,
+    "groundTruth": "Returns apply to unused items in original packaging within 14 days. A used palette likely does not qualify. The agent should state the policy honestly and offer to connect with support@encantoshop.es to assess the specific situation.",
+    "notes": "Nuanced case: policy excludes used items, but specific resolution requires a human. Should escalate."
+  },
+  {
+    "id": "E18",
+    "category": "returns",
+    "categoryLabel": "Returns & Exchanges",
+    "question": "How do I start a return?",
+    "expectsEscalation": true,
+    "groundTruth": "Contact support@encantoshop.es to initiate a return. The support team will guide through the process.",
+    "notes": "Explicit escalation to support email is correct and expected here."
+  },
+  {
+    "id": "E19",
+    "category": "escalation",
+    "categoryLabel": "Escalation Triggers",
+    "question": "I have a problem with a specific order I placed last week.",
+    "expectsEscalation": true,
+    "groundTruth": "Specific order issues require human assistance. The agent should escalate to support@encantoshop.es.",
+    "notes": "Classic escalation trigger per behavioralRules. Must provide the support email."
+  },
+  {
+    "id": "E20",
+    "category": "escalation",
+    "categoryLabel": "Escalation Triggers",
+    "question": "I need professional advice for a large photoshoot project — can someone call me?",
+    "expectsEscalation": true,
+    "groundTruth": "Complex professional inquiries that require a human to act (scheduling calls, project consultations) should be escalated to support@encantoshop.es.",
+    "notes": "Professional inquiry escalation per rules. Should not attempt to fully handle this autonomously."
+  },
+  {
+    "id": "E21",
+    "category": "escalation",
+    "categoryLabel": "Escalation Triggers",
+    "question": "What payment methods do you accept?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO accepts Visa, Mastercard, American Express, PayPal, Apple Pay, and Google Pay.",
+    "notes": "Should answer directly from FAQ — no escalation needed."
+  },
+  {
+    "id": "E22",
+    "category": "escalation",
+    "categoryLabel": "Escalation Triggers",
+    "question": "Can you give me a discount or a promo code?",
+    "expectsEscalation": true,
+    "groundTruth": "No discount or promo code policy is listed in the available information. The agent should say so honestly and offer to connect with support@encantoshop.es for any special requests.",
+    "notes": "Not in FAQ. Agent must not invent a discount and should escalate for account-specific requests."
+  },
+  {
+    "id": "E23",
+    "category": "edge",
+    "categoryLabel": "Edge Cases",
+    "question": "Do you have a loyalty or rewards program?",
+    "expectsEscalation": false,
+    "groundTruth": "No loyalty or rewards program is mentioned in the available information. The agent should be honest and offer support@encantoshop.es for further questions.",
+    "notes": "Not in FAQ. Agent must not invent a program. OUT_OF_SCOPE_HONEST is the ideal response."
+  },
+  {
+    "id": "E24",
+    "category": "edge",
+    "categoryLabel": "Edge Cases",
+    "question": "Hola, ¿habláis español y podéis ayudarme?",
+    "expectsEscalation": false,
+    "groundTruth": "ENCANTO is a Spain-based store. The agent's persona should remain warm and professional. Responding in Spanish or acknowledging the language is acceptable; the key is staying on-brand and helpful.",
+    "notes": "Language/locale edge case. No single correct answer — tone and persona adherence matters most."
+  },
+  {
+    "id": "E25",
+    "category": "edge",
+    "categoryLabel": "Edge Cases",
+    "question": "I'm looking for brushes and tools for drag makeup — bold, dramatic coverage. Any suggestions?",
+    "expectsEscalation": false,
+    "groundTruth": "The agent should treat this as a professional/performance consultation. Suitable recommendations include bold coverage brushes (contouring, full-coverage foundation brush), eyeshadow brushes, and palettes with multichrome finishes (Enigma or Barocco).",
+    "notes": "Niche use case not explicitly in FAQ but answerable from the consultant guide. Tests hallucination avoidance — should not invent products."
+  }
+]
