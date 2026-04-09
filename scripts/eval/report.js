@@ -2,7 +2,7 @@
  * Report builder, console printer, and file writer for eval results.
  */
 
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -231,6 +231,103 @@ function buildMarkdown(report) {
   }
 
   return lines.join('\n');
+}
+
+const LAST_RESULTS_PATH = join(__dirname, 'last-results.json');
+
+/**
+ * Loads the last eval results from last-results.json.
+ * Returns null if the file doesn't exist yet.
+ */
+export function loadLastResults() {
+  try {
+    return JSON.parse(readFileSync(LAST_RESULTS_PATH, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Saves a minimal snapshot of the current report to last-results.json.
+ * This file is committed to git so it persists across runs.
+ */
+export function saveLastResults(report) {
+  const snapshot = {
+    promptVersion: report.meta.promptVersion,
+    runAt: report.meta.runAt,
+    overall: {
+      avgTotal: report.summary.overall.avgTotal,
+      passCount: report.summary.overall.passCount,
+      passRate: report.summary.overall.passRate,
+      verdict: report.summary.overall.verdict,
+    },
+    perTest: report.perTest
+      .filter(r => r.judgeResult)
+      .map(r => ({ id: r.testCase.id, total: r.judgeResult.total, flags: r.judgeResult.flags })),
+  };
+  writeFileSync(LAST_RESULTS_PATH, JSON.stringify(snapshot, null, 2), 'utf8');
+  console.log(`Last results saved: ${LAST_RESULTS_PATH}`);
+}
+
+/**
+ * Prints a before/after comparison between the current report and the last saved results.
+ */
+export function printComparison(report, last) {
+  if (!last) return;
+
+  const cur = report.summary.overall;
+  const deltaTotal = round2(cur.avgTotal - last.overall.avgTotal);
+  const deltaPass = cur.passCount - last.overall.passCount;
+  const deltaSign = n => n > 0 ? `+${n}` : `${n}`;
+
+  console.log('\n--- Comparison vs v' + last.promptVersion + ' (' + last.runAt.slice(0, 10) + ') ---');
+  console.log(
+    `  Overall:  ${last.overall.avgTotal} → ${cur.avgTotal}  (${deltaSign(deltaTotal)})` +
+    `  |  passes: ${last.overall.passCount} → ${cur.passCount}  (${deltaSign(deltaPass)})`
+  );
+
+  // Build lookup maps
+  const lastById = Object.fromEntries(last.perTest.map(t => [t.id, t]));
+  const curById = Object.fromEntries(
+    report.perTest.filter(r => r.judgeResult).map(r => [r.testCase.id, {
+      total: r.judgeResult.total,
+      flags: r.judgeResult.flags,
+    }])
+  );
+
+  const improved = [], degraded = [], stable = [];
+
+  for (const id of Object.keys(curById)) {
+    const c = curById[id];
+    const l = lastById[id];
+    if (!l) continue;
+    const delta = c.total - l.total;
+    if (delta > 0) improved.push({ id, from: l.total, to: c.total, delta, wasFlags: l.flags, nowFlags: c.flags });
+    else if (delta < 0) degraded.push({ id, from: l.total, to: c.total, delta, wasFlags: l.flags, nowFlags: c.flags });
+    else stable.push(id);
+  }
+
+  if (improved.length) {
+    console.log('\n  IMPROVED:');
+    for (const t of improved.sort((a, b) => b.delta - a.delta)) {
+      const wasF = t.wasFlags.length ? `  was: [${t.wasFlags.join(', ')}]` : '';
+      const nowF = t.nowFlags.length ? `  now: [${t.nowFlags.join(', ')}]` : '';
+      console.log(`    ${t.id.padEnd(4)}  ${t.from} → ${t.to}  (+${t.delta})${wasF}${nowF}`);
+    }
+  }
+
+  if (degraded.length) {
+    console.log('\n  DEGRADED:');
+    for (const t of degraded.sort((a, b) => a.delta - b.delta)) {
+      const wasF = t.wasFlags.length ? `  was: [${t.wasFlags.join(', ')}]` : '';
+      const nowF = t.nowFlags.length ? `  now: [${t.nowFlags.join(', ')}]` : '';
+      console.log(`    ${t.id.padEnd(4)}  ${t.from} → ${t.to}  (${t.delta})${wasF}${nowF}`);
+    }
+  }
+
+  if (stable.length) {
+    console.log(`\n  STABLE (${stable.length}): ${stable.join(' ')}`);
+  }
 }
 
 // --- Helpers ---

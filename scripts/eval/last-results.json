@@ -1,0 +1,37 @@
+{
+  "promptVersion": "4.1",
+  "runAt": "2026-04-09T11:08:29.245Z",
+  "overall": {
+    "avgTotal": 9.3,
+    "passCount": 24,
+    "passRate": 0.96,
+    "verdict": "PRODUCTION_READY"
+  },
+  "perTest": [
+    { "id": "E01", "total": 10, "flags": [] },
+    { "id": "E02", "total": 9, "flags": [] },
+    { "id": "E03", "total": 9, "flags": ["HALLUCINATION"] },
+    { "id": "E04", "total": 10, "flags": [] },
+    { "id": "E05", "total": 10, "flags": [] },
+    { "id": "E06", "total": 10, "flags": [] },
+    { "id": "E07", "total": 10, "flags": [] },
+    { "id": "E08", "total": 10, "flags": [] },
+    { "id": "E09", "total": 8, "flags": ["UNNECESSARY_ESCALATION"] },
+    { "id": "E10", "total": 6, "flags": ["HALLUCINATION", "UNNECESSARY_ESCALATION"] },
+    { "id": "E11", "total": 10, "flags": [] },
+    { "id": "E12", "total": 10, "flags": [] },
+    { "id": "E13", "total": 10, "flags": [] },
+    { "id": "E14", "total": 7, "flags": ["FILLER_OPENER", "HALLUCINATION"] },
+    { "id": "E15", "total": 9, "flags": ["FILLER_OPENER"] },
+    { "id": "E16", "total": 10, "flags": [] },
+    { "id": "E17", "total": 10, "flags": [] },
+    { "id": "E18", "total": 10, "flags": [] },
+    { "id": "E19", "total": 7, "flags": ["FILLER_OPENER"] },
+    { "id": "E20", "total": 10, "flags": [] },
+    { "id": "E21", "total": 10, "flags": [] },
+    { "id": "E22", "total": 10, "flags": [] },
+    { "id": "E23", "total": 10, "flags": [] },
+    { "id": "E24", "total": 7, "flags": ["FILLER_OPENER", "MISSING_BOLD"] },
+    { "id": "E25", "total": 10, "flags": [] }
+  ]
+}

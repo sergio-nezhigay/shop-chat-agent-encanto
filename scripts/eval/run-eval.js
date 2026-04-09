@@ -17,7 +17,7 @@
 import { createRequire } from 'module';
 import { Anthropic } from '@anthropic-ai/sdk';
 import { scoreResponse } from './scorer.js';
-import { buildReport, printSummary, saveReport } from './report.js';
+import { buildReport, printSummary, saveReport, loadLastResults, saveLastResults, printComparison } from './report.js';
 
 // Use createRequire to load JSON in an ESM context
 const require = createRequire(import.meta.url);
@@ -91,6 +91,8 @@ async function main() {
 
   const anthropic = new Anthropic({ apiKey });
 
+  const lastResults = loadLastResults();
+
   console.log(`\n--- Encanto Prompt Eval ---`);
   console.log(`Agent model:  ${agentModel}`);
   console.log(`Judge model:  ${judgeModel}`);
@@ -159,7 +161,9 @@ async function main() {
   });
 
   printSummary(report);
+  printComparison(report, lastResults);
   saveReport(report);
+  saveLastResults(report);
 }
 
 function sleep(ms) {
