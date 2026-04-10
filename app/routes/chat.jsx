@@ -322,7 +322,7 @@ async function handleChatSession({
               conversationId,
             );
           } else {
-            await toolService.handleToolSuccess(
+            const cartChanged = await toolService.handleToolSuccess(
               toolUseResponse,
               toolName,
               toolUseId,
@@ -331,6 +331,13 @@ async function handleChatSession({
               conversationId,
               toolArgs,
             );
+
+            if (cartChanged) {
+              stream.sendMessage({
+                type: "cart_changed",
+                tool_name: toolName,
+              });
+            }
           }
 
           // Signal new message to client

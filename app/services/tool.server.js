@@ -10,6 +10,26 @@ import AppConfig from "./config.server";
  * @returns {Object} Tool service with methods for managing tools
  */
 export function createToolService() {
+  const CART_MUTATION_TOOL_NAMES = new Set([
+    "add_to_cart",
+    "clear_cart",
+    "empty_cart",
+    "remove_cart",
+    "remove_from_cart",
+    "set_cart",
+    "update_cart",
+  ]);
+
+  const isCartMutationTool = (toolName) => {
+    const normalizedToolName = (toolName || "").toLowerCase();
+
+    if (!normalizedToolName) return false;
+    if (normalizedToolName === "get_cart") return false;
+    if (CART_MUTATION_TOOL_NAMES.has(normalizedToolName)) return true;
+
+    return normalizedToolName.includes("cart") && !normalizedToolName.includes("get_cart");
+  };
+
   /**
    * Handles a tool error response
    * @param {Object} toolUseResponse - The error response from the tool
@@ -46,6 +66,8 @@ export function createToolService() {
     }
 
     addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
+
+    return isCartMutationTool(toolName);
   };
 
   /**

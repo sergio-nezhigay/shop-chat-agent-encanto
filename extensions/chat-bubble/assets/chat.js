@@ -85,6 +85,308 @@
 
   };
 
+  const CART_REFRESH_EVENT = "shopai:cart-changed";
+  const CART_REFRESH_COMPLETE_EVENT = "shopai:cart-refreshed";
+
+  const CartSyncBridge = {
+    _installed: false,
+    _refreshPromise: null,
+
+    install: function () {
+      if (this._installed) return;
+
+      this._installed = true;
+
+      document.addEventListener(CART_REFRESH_EVENT, (event) => {
+        if (event?.detail?.source === "shop-ai-chat") return;
+        this.refresh({
+          reason: CART_REFRESH_EVENT,
+          source: event?.detail?.source || "external",
+          detail: event?.detail || null,
+        });
+      });
+
+      window.addEventListener(CART_REFRESH_EVENT, (event) => {
+        if (event?.detail?.source === "shop-ai-chat") return;
+        this.refresh({
+          reason: CART_REFRESH_EVENT,
+          source: event?.detail?.source || "external",
+          detail: event?.detail || null,
+        });
+      });
+
+      document.addEventListener("cart-update", (event) => {
+        if (event?.detail?.source === "shop-ai-chat") return;
+        this.refresh({
+          reason: "cart-update",
+          source: event?.detail?.source || "external",
+          detail: event?.detail || null,
+        });
+      });
+
+      window.addEventListener("cart-update", (event) => {
+        if (event?.detail?.source === "shop-ai-chat") return;
+        this.refresh({
+          reason: "cart-update",
+          source: event?.detail?.source || "external",
+          detail: event?.detail || null,
+        });
+      });
+
+      window.addEventListener("focus", () => {
+        this.refresh({
+          reason: "window-focus",
+          source: "window",
+        });
+      });
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+          this.refresh({
+            reason: "visibilitychange",
+            source: "document",
+          });
+        }
+      });
+    },
+
+    notifyCartMutation: function (detail = {}) {
+      const payload = {
+        source: "shop-ai-chat",
+        timestamp: Date.now(),
+        ...detail,
+      };
+
+      [document, window].forEach((target) => {
+        if (!target || typeof target.dispatchEvent !== "function") return;
+
+        target.dispatchEvent(
+          new CustomEvent("cart-update", {
+            detail: payload,
+          }),
+        );
+        target.dispatchEvent(
+          new CustomEvent(CART_REFRESH_EVENT, {
+            detail: payload,
+          }),
+        );
+      });
+    },
+
+    refresh: async function (detail = {}) {
+      if (this._refreshPromise) return this._refreshPromise;
+
+      this._refreshPromise = (async () => {
+        const cart = await this.fetchCart();
+        if (!cart) return null;
+
+        this.updateBadge(cart);
+        await this.updateSections(cart);
+
+        document.dispatchEvent(
+          new CustomEvent(CART_REFRESH_COMPLETE_EVENT, {
+            detail: {
+              source: "shop-ai-chat",
+              cart,
+              detail,
+            },
+          }),
+        );
+
+        return cart;
+      })();
+
+      try {
+        return await this._refreshPromise;
+      } finally {
+        this._refreshPromise = null;
+      }
+    },
+
+    fetchCart: async function () {
+      const cartUrl = window.routes?.cart_url || "/cart";
+
+      try {
+        const response = await fetch(`${cartUrl}.js`, {
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Cart refresh failed: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.warn("Unable to refresh cart state:", error);
+        return null;
+      }
+    },
+
+    updateBadge: function (cart) {
+      const itemCount = Number(cart?.item_count || 0);
+      const visibleCountMarkup =
+        itemCount > 0 && itemCount < 100
+          ? `<span aria-hidden="true">${itemCount}</span>`
+          : "";
+      const hiddenCountMarkup = `<span class="visually-hidden">Cart count ${itemCount}</span>`;
+
+      const badgeTargets = [
+        "#cart-icon-bubble",
+        ".cart-count-bubble",
+        "[data-cart-count]",
+      ];
+
+      badgeTargets.forEach((selector) => {
+        document.querySelectorAll(selector).forEach((target) => {
+          if (!(target instanceof HTMLElement)) return;
+
+          if (selector === "#cart-icon-bubble") {
+            const bubble = target.querySelector(".cart-count-bubble");
+            if (itemCount === 0) {
+              bubble?.remove();
+              return;
+            }
+
+            if (bubble) {
+              bubble.innerHTML = `${visibleCountMarkup}${hiddenCountMarkup}`;
+              return;
+            }
+
+            const newBubble = document.createElement("div");
+            newBubble.className = "cart-count-bubble";
+            newBubble.innerHTML = `${visibleCountMarkup}${hiddenCountMarkup}`;
+            target.appendChild(newBubble);
+            return;
+          }
+
+          if (target.classList.contains("cart-count-bubble")) {
+            if (itemCount === 0) {
+              target.remove();
+            } else {
+              target.innerHTML = `${visibleCountMarkup}${hiddenCountMarkup}`;
+            }
+            return;
+          }
+
+          target.textContent = String(itemCount);
+        });
+      });
+    },
+
+    updateSections: async function (cart) {
+      const cartUrl = window.routes?.cart_url || "/cart";
+      const sectionIds = new Set(["cart-icon-bubble"]);
+      const hasCartDrawer = !!document.querySelector("cart-drawer");
+      const hasCartPage = !!document.getElementById("main-cart-items") ||
+        !!document.querySelector("cart-items") ||
+        document.body?.classList.contains("template-cart") ||
+        window.location.pathname === "/cart";
+
+      if (hasCartDrawer) {
+        sectionIds.add("cart-drawer");
+      }
+
+      if (hasCartPage) {
+        sectionIds.add("main-cart-items");
+        sectionIds.add("main-cart-footer");
+        sectionIds.add("cart-live-region-text");
+      }
+
+      const sections = await this.fetchSections(cartUrl, Array.from(sectionIds));
+
+      if (hasCartDrawer) {
+        this.updateCartDrawer(sections["cart-drawer"], sections["cart-icon-bubble"], cart);
+      } else if (sections["cart-icon-bubble"]) {
+        this.updateSectionHtml("cart-icon-bubble", sections["cart-icon-bubble"], "#cart-icon-bubble");
+      }
+
+      if (hasCartPage) {
+        this.updateSectionHtml("main-cart-items", sections["main-cart-items"], "#main-cart-items");
+        this.updateSectionHtml("main-cart-footer", sections["main-cart-footer"], "#main-cart-footer");
+        this.updateSectionHtml("cart-live-region-text", sections["cart-live-region-text"], "#cart-live-region-text");
+      }
+    },
+
+    fetchSections: async function (cartUrl, sectionIds) {
+      if (!sectionIds.length) return {};
+
+      const sectionsQuery = sectionIds.join(",");
+      const sectionsUrl = `${cartUrl}?sections=${encodeURIComponent(sectionsQuery)}&sections_url=${encodeURIComponent(window.location.pathname || "/")}`;
+
+      try {
+        const response = await fetch(sectionsUrl, {
+          credentials: "same-origin",
+        });
+
+        if (!response.ok) {
+          throw new Error(`Section refresh failed: ${response.status}`);
+        }
+
+        return await response.json();
+      } catch (error) {
+        console.warn("Unable to refresh cart sections:", error);
+        return {};
+      }
+    },
+
+    updateCartDrawer: function (drawerHtml, cartIconHtml, cart) {
+      const cartDrawer = document.querySelector("cart-drawer");
+      if (!cartDrawer || !drawerHtml) {
+        if (cartIconHtml) {
+          this.updateSectionHtml("cart-icon-bubble", cartIconHtml, "#cart-icon-bubble");
+        }
+        return;
+      }
+
+      const drawerInnerHtml = this.extractInnerHTML(drawerHtml, "#CartDrawer") || this.extractInnerHTML(drawerHtml, ".shopify-section") || drawerHtml;
+      const drawerElement = cartDrawer.querySelector("#CartDrawer");
+
+      if (drawerElement && drawerInnerHtml) {
+        drawerElement.innerHTML = drawerInnerHtml;
+      }
+
+      const overlay = cartDrawer.querySelector("#CartDrawer-Overlay");
+      if (overlay) {
+        overlay.onclick = () => cartDrawer.close();
+      }
+
+      cartDrawer.classList.toggle("is-empty", Number(cart?.item_count || 0) === 0);
+
+      if (cartIconHtml) {
+        this.updateSectionHtml("cart-icon-bubble", cartIconHtml, "#cart-icon-bubble");
+      } else {
+        this.updateBadge(cart);
+      }
+    },
+
+    updateSectionHtml: function (sectionId, html, targetSelector) {
+      if (!html) return;
+
+      const target = document.querySelector(targetSelector || `#${sectionId}`);
+      if (!target) return;
+
+      const innerHtml =
+        this.extractInnerHTML(html, ".shopify-section") ||
+        this.extractInnerHTML(html, targetSelector) ||
+        html;
+
+      target.innerHTML = innerHtml;
+    },
+
+    extractInnerHTML: function (html, selector) {
+      if (!html) return "";
+
+      try {
+        const parsedHtml = new DOMParser().parseFromString(html, "text/html");
+        const element = parsedHtml.querySelector(selector);
+        return element ? element.innerHTML : "";
+      } catch (error) {
+        console.warn("Unable to parse refreshed cart section:", error);
+        return "";
+      }
+    },
+  };
+
   // ---------------------------------------------------------------------------
 
   /**
@@ -901,6 +1203,16 @@
             ShopAIChat.UI.displayProductResults(data.products);
             break;
 
+          case "cart_changed":
+            ShopAIChat.CartSync.notifyCartMutation({
+              toolName: data.tool_name || null,
+            });
+            ShopAIChat.CartSync.refresh({
+              reason: "assistant-cart-change",
+              toolName: data.tool_name || null,
+            });
+            break;
+
           case "new_message":
             // Finalize the current accumulated message
             ShopAIChat.UI.removeTypingIndicator();
@@ -1379,15 +1691,16 @@
     /**
      * Initialize the chat application
      */
-    init: function () {
-      // Initialize UI
-      const container = document.querySelector(".shop-ai-chat-container");
-      if (!container) return;
+      init: function () {
+        // Initialize UI
+        const container = document.querySelector(".shop-ai-chat-container");
+        if (!container) return;
 
-      this.UI.init(container);
+        this.UI.init(container);
+        this.CartSync.install();
 
-      // Check for existing conversation
-      const conversationId = sessionStorage.getItem("shopAiConversationId");
+        // Check for existing conversation
+        const conversationId = sessionStorage.getItem("shopAiConversationId");
 
       if (conversationId) {
         // Fetch conversation history
@@ -1415,6 +1728,8 @@
       }
     },
   };
+
+  ShopAIChat.CartSync = CartSyncBridge;
 
   // Initialize the application when DOM is ready
   document.addEventListener("DOMContentLoaded", function () {
