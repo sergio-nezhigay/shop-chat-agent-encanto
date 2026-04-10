@@ -614,7 +614,7 @@
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
           const unorderedMatch = line.match(/^\s*([-*])\s+(.*)/);
-          const orderedMatch = line.match(/^\s*(\d+)[\.)]\s+(.*)/);
+          const orderedMatch = line.match(/^\s*(\d+)[.)]\s+(.*)/);
 
           if (unorderedMatch) {
             if (currentList !== "ul") {
@@ -673,6 +673,56 @@
      */
     API: {
       /**
+       * Collect lightweight page context for the current storefront view.
+       * This is sent with each chat turn so the assistant can answer in context.
+       * @returns {Object|null}
+       */
+      getCurrentPageContext: function () {
+        try {
+          const pageType = this.detectPageType();
+          const title = (document.title || "").trim();
+
+          return {
+            url: window.location.href,
+            pathname: window.location.pathname,
+            title,
+            page_type: pageType,
+          };
+        } catch (error) {
+          console.warn("Unable to collect page context:", error);
+          return null;
+        }
+      },
+
+      /**
+       * Derive a simple page type without scraping the full DOM.
+       * @returns {string}
+       */
+      detectPageType: function () {
+        const bodyClassList = document.body?.classList;
+        const pathname = (window.location.pathname || "").replace(/\/+$/, "") || "/";
+
+        if (bodyClassList) {
+          if (bodyClassList.contains("template-product")) return "product";
+          if (bodyClassList.contains("template-collection")) return "collection";
+          if (bodyClassList.contains("template-cart")) return "cart";
+          if (bodyClassList.contains("template-page")) return "page";
+          if (bodyClassList.contains("template-blog") || bodyClassList.contains("template-article")) {
+            return "article";
+          }
+        }
+
+        if (pathname === "/" || pathname === "") return "home";
+        if (pathname === "/cart") return "cart";
+        if (pathname.includes("/products/")) return "product";
+        if (pathname.includes("/collections/")) return "collection";
+        if (pathname.includes("/pages/")) return "page";
+        if (pathname.includes("/blogs/") || pathname.includes("/articles/")) return "article";
+
+        return "other";
+      },
+
+      /**
        * Stream a response from the API
        * @param {string} userMessage - User's message text
        * @param {string} conversationId - Conversation ID for context
@@ -683,12 +733,10 @@
         conversationId,
         messagesContainer,
       ) {
-        // Accumulate text silently — no visible streaming
-        let accumulatedText = "";
-
         try {
           const promptType =
             window.shopChatConfig?.promptType || "standardAssistant";
+          const pageContext = this.getCurrentPageContext();
 
           // Fetch customer's current cart token so the AI operates on the existing cart
           let cartToken = null;
@@ -698,13 +746,16 @@
               const cartData = await cartResp.json();
               cartToken = cartData.token || null;
             }
-          } catch(e) {}
+          } catch (e) {
+            void e;
+          }
 
           const requestBody = JSON.stringify({
             message: userMessage,
             conversation_id: conversationId,
             prompt_type: promptType,
             cart_token: cartToken,
+            page_context: pageContext,
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";
@@ -728,9 +779,13 @@
           const streamState = { accumulatedText: "" };
 
           // Process the stream
-          while (true) {
+          let reading = true;
+          while (reading) {
             const { value, done } = await reader.read();
-            if (done) break;
+            if (done) {
+              reading = false;
+              break;
+            }
 
             buffer += decoder.decode(value, { stream: true });
             const lines = buffer.split("\n\n");

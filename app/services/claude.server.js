@@ -41,9 +41,10 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     promptType = AppConfig.api.defaultPromptType,
     tools,
     cartGid,
+    pageContext,
   }, streamHandlers) => {
     // Get system prompt from configuration or use default
-    const systemInstruction = getSystemPrompt(promptType);
+    const systemInstruction = getSystemPrompt(promptType, pageContext);
 
     // Inject customer's existing cart ID so Claude uses it instead of creating a new cart
     if (cartGid) {
@@ -97,7 +98,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
    * @param {string} promptType - The prompt type to retrieve
    * @returns {string} The system prompt content
    */
-  const getSystemPrompt = (promptType) => {
+  const getSystemPrompt = (promptType, pageContext) => {
     const config = systemPrompts.systemPrompts[promptType] ||
       systemPrompts.systemPrompts[AppConfig.api.defaultPromptType];
 
@@ -113,13 +114,53 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
 
     const text = config.template.replace(/\$\{(\w+)\}/g, (_, key) => variables[key] ?? "");
 
-    return [
+    const systemPrompt = [
       {
         type: "text",
         text,
         cache_control: { type: "ephemeral" }
       }
     ];
+
+    const normalizedPageContext = normalizePageContext(pageContext);
+    if (normalizedPageContext) {
+      systemPrompt.push({
+        type: "text",
+        text: buildPageContextBlock(normalizedPageContext),
+      });
+    }
+
+    return systemPrompt;
+  };
+
+  const buildPageContextBlock = (pageContext) => {
+    return `<page_context>
+The customer is currently viewing this storefront page.
+- URL: ${pageContext.url || ""}
+- Pathname: ${pageContext.pathname || ""}
+- Title: ${pageContext.title || ""}
+- Page type: ${pageContext.page_type || ""}
+
+Use this context to resolve questions about what the customer is looking at. If the page context is sufficient to answer, do not ask what page they are on; answer directly and stay grounded in the current page.
+</page_context>`;
+  };
+
+  const normalizePageContext = (pageContext) => {
+    if (!pageContext || typeof pageContext !== "object") return null;
+
+    const url = typeof pageContext.url === "string" ? pageContext.url.trim() : "";
+    const pathname = typeof pageContext.pathname === "string" ? pageContext.pathname.trim() : "";
+    const title = typeof pageContext.title === "string" ? pageContext.title.trim() : "";
+    const pageType = typeof pageContext.page_type === "string" ? pageContext.page_type.trim() : "";
+
+    if (!url && !pathname && !title && !pageType) return null;
+
+    return {
+      ...(url ? { url } : {}),
+      ...(pathname ? { pathname } : {}),
+      ...(title ? { title } : {}),
+      ...(pageType ? { page_type: pageType } : {}),
+    };
   };
 
   return {

@@ -101,6 +101,7 @@ async function handleChatRequest(request) {
     const conversationId = body.conversation_id || Date.now().toString();
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
     const cartGid = body.cart_token ? `gid://shopify/Cart/${body.cart_token}` : null;
+    const pageContext = normalizePageContext(body.page_context);
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -110,6 +111,7 @@ async function handleChatRequest(request) {
         conversationId,
         promptType,
         cartGid,
+        pageContext,
         stream,
       });
     });
@@ -141,6 +143,7 @@ async function handleChatSession({
   conversationId,
   promptType,
   cartGid,
+  pageContext,
   stream,
 }) {
   // Initialize services
@@ -162,219 +165,238 @@ async function handleChatSession({
     mcpApiUrl,
   );
 
+  // Send conversation ID to client
+  stream.sendMessage({ type: "id", conversation_id: conversationId });
+
+  // Connect to MCP servers and get available tools
+  let storefrontMcpTools = [],
+    customerMcpTools = [];
+
   try {
-    // Send conversation ID to client
-    stream.sendMessage({ type: "id", conversation_id: conversationId });
+    storefrontMcpTools = await mcpClient.connectToStorefrontServer();
+    customerMcpTools = await mcpClient.connectToCustomerServer();
 
-    // Connect to MCP servers and get available tools
-    let storefrontMcpTools = [],
-      customerMcpTools = [];
+    console.log(`Connected to MCP with ${storefrontMcpTools.length} tools`);
+    console.log(
+      `Connected to customer MCP with ${customerMcpTools.length} tools`,
+    );
+  } catch (error) {
+    console.warn(
+      "Failed to connect to MCP servers, continuing without tools:",
+      error.message,
+    );
+  }
 
+  // Prepare conversation state
+  let conversationHistory = [];
+  let productsToDisplay = [];
+
+  // Save user message to the database
+  await saveMessage(conversationId, "user", userMessage);
+
+  // Fetch all messages from the database for this conversation
+  const dbMessages = await getConversationHistory(conversationId);
+
+  // Format messages for Claude API
+  const processedMessages = [];
+  dbMessages.forEach((dbMessage) => {
+    let content;
     try {
-      storefrontMcpTools = await mcpClient.connectToStorefrontServer();
-      customerMcpTools = await mcpClient.connectToCustomerServer();
-
-      console.log(`Connected to MCP with ${storefrontMcpTools.length} tools`);
-      console.log(
-        `Connected to customer MCP with ${customerMcpTools.length} tools`,
-      );
-    } catch (error) {
-      console.warn(
-        "Failed to connect to MCP servers, continuing without tools:",
-        error.message,
-      );
+      content = JSON.parse(dbMessage.content);
+    } catch (e) {
+      content = dbMessage.content;
     }
 
-    // Prepare conversation state
-    let conversationHistory = [];
-    let productsToDisplay = [];
+    // 1. Filter out product_results blocks from message content
+    if (Array.isArray(content)) {
+      content = content.filter((block) => block.type !== "product_results");
+      // If message becomes empty after filtering, don't add it
+      if (content.length === 0) return;
+    }
 
-    // Save user message to the database
-    await saveMessage(conversationId, "user", userMessage);
-
-    // Fetch all messages from the database for this conversation
-    const dbMessages = await getConversationHistory(conversationId);
-
-    // Format messages for Claude API
-    const processedMessages = [];
-    dbMessages.forEach((dbMessage) => {
-      let content;
-      try {
-        content = JSON.parse(dbMessage.content);
-      } catch (e) {
-        content = dbMessage.content;
-      }
-
-      // 1. Filter out product_results blocks from message content
-      if (Array.isArray(content)) {
-        content = content.filter((block) => block.type !== "product_results");
-        // If message becomes empty after filtering, don't add it
-        if (content.length === 0) return;
-      }
-
-      // 2. Handle role alternation and merging
-      const lastMessage = processedMessages[processedMessages.length - 1];
-      if (lastMessage && lastMessage.role === dbMessage.role) {
-        // Merge consecutive messages with the same role
-        if (Array.isArray(lastMessage.content) && Array.isArray(content)) {
-          lastMessage.content = [...lastMessage.content, ...content];
-        } else if (
-          typeof lastMessage.content === "string" &&
-          typeof content === "string"
-        ) {
-          lastMessage.content += "\n" + content;
-        } else {
-          // Mixed types: convert to array of blocks
-          const lastContent = Array.isArray(lastMessage.content)
-            ? lastMessage.content
-            : [{ type: "text", text: lastMessage.content }];
-          const currentContent = Array.isArray(content)
-            ? content
-            : [{ type: "text", text: content }];
-          lastMessage.content = [...lastContent, ...currentContent];
-        }
+    // 2. Handle role alternation and merging
+    const lastMessage = processedMessages[processedMessages.length - 1];
+    if (lastMessage && lastMessage.role === dbMessage.role) {
+      // Merge consecutive messages with the same role
+      if (Array.isArray(lastMessage.content) && Array.isArray(content)) {
+        lastMessage.content = [...lastMessage.content, ...content];
+      } else if (
+        typeof lastMessage.content === "string" &&
+        typeof content === "string"
+      ) {
+        lastMessage.content += "\n" + content;
       } else {
-        processedMessages.push({
-          role: dbMessage.role,
-          content,
-        });
+        // Mixed types: convert to array of blocks
+        const lastContent = Array.isArray(lastMessage.content)
+          ? lastMessage.content
+          : [{ type: "text", text: lastMessage.content }];
+        const currentContent = Array.isArray(content)
+          ? content
+          : [{ type: "text", text: content }];
+        lastMessage.content = [...lastContent, ...currentContent];
       }
-    });
-
-    // Claude requires the first message to be from 'user'
-    if (processedMessages.length > 0 && processedMessages[0].role !== "user") {
-      processedMessages.shift();
+    } else {
+      processedMessages.push({
+        role: dbMessage.role,
+        content,
+      });
     }
+  });
 
-    conversationHistory = processedMessages;
+  // Claude requires the first message to be from 'user'
+  if (processedMessages.length > 0 && processedMessages[0].role !== "user") {
+    processedMessages.shift();
+  }
 
-    // Execute the conversation stream
-    let finalMessage = { role: "user", content: userMessage };
+  conversationHistory = processedMessages;
 
-    while (finalMessage.stop_reason !== "end_turn") {
-      finalMessage = await claudeService.streamConversation(
-        {
-          messages: conversationHistory,
-          promptType,
-          tools: mcpClient.tools,
-          cartGid,
+  // Execute the conversation stream
+  let finalMessage = { role: "user", content: userMessage };
+
+  while (finalMessage.stop_reason !== "end_turn") {
+    finalMessage = await claudeService.streamConversation(
+      {
+        messages: conversationHistory,
+        promptType,
+        tools: mcpClient.tools,
+        cartGid,
+        pageContext,
+      },
+      {
+        // Handle text chunks
+        onText: (textDelta) => {
+          stream.sendMessage({
+            type: "chunk",
+            chunk: textDelta,
+          });
         },
-        {
-          // Handle text chunks
-          onText: (textDelta) => {
+
+        // Handle complete messages
+        onMessage: (message) => {
+          conversationHistory.push({
+            role: message.role,
+            content: message.content,
+          });
+
+          saveMessage(
+            conversationId,
+            message.role,
+            JSON.stringify(message.content),
+          ).catch((error) => {
+            console.error("Error saving message to database:", error);
+          });
+
+          // Send a completion message
+          stream.sendMessage({ type: "message_complete" });
+        },
+
+        // Handle tool use requests
+        onToolUse: async (content) => {
+          const toolName = content.name;
+          const toolArgs = content.input;
+          const toolUseId = content.id;
+
+          if (SEND_TOOL_USE_EVENTS) {
+            const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
+
             stream.sendMessage({
-              type: "chunk",
-              chunk: textDelta,
+              type: "tool_use",
+              tool_use_message: toolUseMessage,
             });
-          },
+          }
 
-          // Handle complete messages
-          onMessage: (message) => {
-            conversationHistory.push({
-              role: message.role,
-              content: message.content,
-            });
+          // Call the tool
+          const toolUseResponse = await mcpClient.callTool(
+            toolName,
+            toolArgs,
+          );
 
-            saveMessage(
-              conversationId,
-              message.role,
-              JSON.stringify(message.content),
-            ).catch((error) => {
-              console.error("Error saving message to database:", error);
-            });
-
-            // Send a completion message
-            stream.sendMessage({ type: "message_complete" });
-          },
-
-          // Handle tool use requests
-          onToolUse: async (content) => {
-            const toolName = content.name;
-            const toolArgs = content.input;
-            const toolUseId = content.id;
-
-            if (SEND_TOOL_USE_EVENTS) {
-              const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
-
-              stream.sendMessage({
-                type: "tool_use",
-                tool_use_message: toolUseMessage,
-              });
-            }
-
-            // Call the tool
-            const toolUseResponse = await mcpClient.callTool(
+          // Handle tool response based on success/error
+          if (toolUseResponse.error) {
+            await toolService.handleToolError(
+              toolUseResponse,
               toolName,
+              toolUseId,
+              conversationHistory,
+              stream.sendMessage,
+              conversationId,
+            );
+          } else {
+            await toolService.handleToolSuccess(
+              toolUseResponse,
+              toolName,
+              toolUseId,
+              conversationHistory,
+              productsToDisplay,
+              conversationId,
               toolArgs,
             );
+          }
 
-            // Handle tool response based on success/error
-            if (toolUseResponse.error) {
-              await toolService.handleToolError(
-                toolUseResponse,
-                toolName,
-                toolUseId,
-                conversationHistory,
-                stream.sendMessage,
-                conversationId,
-              );
-            } else {
-              await toolService.handleToolSuccess(
-                toolUseResponse,
-                toolName,
-                toolUseId,
-                conversationHistory,
-                productsToDisplay,
-                conversationId,
-                toolArgs,
-              );
-            }
-
-            // Signal new message to client
-            stream.sendMessage({ type: "new_message" });
-          },
-
-          // Handle content block completion
-          onContentBlock: (contentBlock) => {
-            if (contentBlock.type === "text") {
-              stream.sendMessage({
-                type: "content_block_complete",
-                content_block: contentBlock,
-              });
-            }
-          },
+          // Signal new message to client
+          stream.sendMessage({ type: "new_message" });
         },
-      );
-    }
 
-    // Signal end of turn
-    stream.sendMessage({ type: "end_turn" });
-
-    // Send product results if available
-    if (productsToDisplay.length > 0) {
-      stream.sendMessage({
-        type: "product_results",
-        products: productsToDisplay,
-      });
-
-      // Persist product results to database so they show in archive/history
-      saveMessage(
-        conversationId,
-        "assistant",
-        JSON.stringify([
-          {
-            type: "product_results",
-            products: productsToDisplay,
-          },
-        ]),
-      ).catch((error) => {
-        console.error("Error saving product results to database:", error);
-      });
-    }
-  } catch (error) {
-    // The streaming handler takes care of error handling
-    throw error;
+        // Handle content block completion
+        onContentBlock: (contentBlock) => {
+          if (contentBlock.type === "text") {
+            stream.sendMessage({
+              type: "content_block_complete",
+              content_block: contentBlock,
+            });
+          }
+        },
+      },
+    );
   }
+
+  // Signal end of turn
+  stream.sendMessage({ type: "end_turn" });
+
+  // Send product results if available
+  if (productsToDisplay.length > 0) {
+    stream.sendMessage({
+      type: "product_results",
+      products: productsToDisplay,
+    });
+
+    // Persist product results to database so they show in archive/history
+    saveMessage(
+      conversationId,
+      "assistant",
+      JSON.stringify([
+        {
+          type: "product_results",
+          products: productsToDisplay,
+        },
+      ]),
+    ).catch((error) => {
+      console.error("Error saving product results to database:", error);
+    });
+  }
+}
+
+/**
+ * Normalize client-supplied page context into a compact safe payload.
+ * @param {Object} pageContext - Raw page context from the browser
+ * @returns {Object|null}
+ */
+function normalizePageContext(pageContext) {
+  if (!pageContext || typeof pageContext !== "object") return null;
+
+  const url = typeof pageContext.url === "string" ? pageContext.url.trim() : "";
+  const pathname = typeof pageContext.pathname === "string" ? pageContext.pathname.trim() : "";
+  const title = typeof pageContext.title === "string" ? pageContext.title.trim() : "";
+  const pageType = typeof pageContext.page_type === "string" ? pageContext.page_type.trim() : "";
+
+  if (!url && !pathname && !title && !pageType) return null;
+
+  return {
+    ...(url ? { url } : {}),
+    ...(pathname ? { pathname } : {}),
+    ...(title ? { title } : {}),
+    ...(pageType ? { page_type: pageType } : {}),
+  };
 }
 
 /**
