@@ -62,7 +62,7 @@ export function createToolService() {
   const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId, toolArgs) => {
     // Check if this is a product search result
     if (toolName === AppConfig.tools.productSearchName) {
-      productsToDisplay.push(...processProductSearchResult(toolUseResponse, toolArgs));
+      productsToDisplay.push(...await processProductSearchResult(toolUseResponse, toolArgs));
 
       // [price-debug] Log the raw MCP content Claude will see in conversation history
       try {
@@ -86,11 +86,54 @@ export function createToolService() {
   };
 
   /**
+   * Fetches a product image URL from Shopify's public product JSON endpoint.
+   * No auth required — works for any publicly accessible storefront.
+   * @param {string} productUrl - e.g. "https://store.com/products/handle"
+   * @returns {Promise<string>} Image URL or empty string
+   */
+  const fetchProductImageUrl = async (productUrl) => {
+    if (!productUrl) return '';
+    try {
+      const res = await fetch(`${productUrl}.json`, {
+        headers: { Accept: 'application/json' },
+        signal: AbortSignal.timeout(3000),
+      });
+      if (!res.ok) return '';
+      const data = await res.json();
+      return data?.product?.featured_image || data?.product?.images?.[0]?.src || '';
+    } catch {
+      return '';
+    }
+  };
+
+  /**
+   * Enriches a list of formatted products with images fetched from Shopify's
+   * public product JSON endpoint for any product missing an image URL.
+   * @param {Array} products - Already-formatted product objects
+   * @returns {Promise<Array>} Same products with image_url filled in where possible
+   */
+  const enrichProductsWithImages = async (products) => {
+    const missing = products.filter((p) => !p.image_url && p.url);
+    if (missing.length === 0) return products;
+
+    const imageMap = {};
+    await Promise.all(
+      missing.map(async (p) => {
+        imageMap[p.id] = await fetchProductImageUrl(p.url);
+      })
+    );
+
+    return products.map((p) =>
+      imageMap[p.id] !== undefined ? { ...p, image_url: imageMap[p.id] } : p
+    );
+  };
+
+  /**
    * Processes product search results
    * @param {Object} toolUseResponse - The response from the tool
-   * @returns {Array} Processed product data
+   * @returns {Promise<Array>} Processed product data
    */
-  const processProductSearchResult = (toolUseResponse, toolArgs) => {
+  const processProductSearchResult = async (toolUseResponse, toolArgs) => {
     try {
       console.log("Processing product search result");
       let products = [];
@@ -117,6 +160,10 @@ export function createToolService() {
               .map(formatProductData);
 
             console.log(`Found ${products.length} products to display (after availability filter)`);
+
+            // Fetch real images from Shopify's public .json endpoint for any
+            // products the MCP did not include image data for
+            products = await enrichProductsWithImages(products);
           }
         } catch (e) {
           console.error("Error parsing product data:", e);

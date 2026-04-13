@@ -45,7 +45,9 @@
       "WebFetch(domain:github.com)",
       "Bash(npm root:*)",
       "Bash(dir \"C:\\\\projects\\\\shop-chat-agent-encanto\" /b)",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(gh api:*)",
+      "Bash(git log:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
