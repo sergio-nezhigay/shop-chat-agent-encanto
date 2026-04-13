@@ -1058,6 +1058,8 @@
             prompt_type: promptType,
             cart_token: cartToken,
             page_context: pageContext,
+            buyer_country: window.shopChatConfig?.buyerCountry || null,
+            buyer_currency: window.shopChatConfig?.buyerCurrency || null,
           });
 
           const streamUrl = (window.shopChatConfig?.appUrl || "") + "/chat";

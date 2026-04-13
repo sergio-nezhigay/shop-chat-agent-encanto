@@ -189,11 +189,20 @@ export function createToolService() {
    * @param {Object} product - Raw product data
    * @returns {Object} Formatted product data
    */
+  const normalizePrice = (raw) => {
+    if (raw == null) return raw;
+    const str = String(raw);
+    // European decimal format (e.g. "66,00") → standard "66.00"
+    // Only convert if the comma is used as a decimal separator:
+    // pattern: digits, comma, exactly 2 digits, end-of-string
+    return /^\d+,\d{2}$/.test(str) ? str.replace(',', '.') : str;
+  };
+
   const formatProductData = (product) => {
     const price = product.price_range
-      ? `${product.price_range.currency} ${product.price_range.min}`
+      ? `${product.price_range.currency} ${normalizePrice(product.price_range.min)}`
       : (product.variants && product.variants.length > 0
-        ? `${product.variants[0].currency} ${product.variants[0].price}`
+        ? `${product.variants[0].currency} ${normalizePrice(product.variants[0].price)}`
         : 'Price not available');
 
     return {

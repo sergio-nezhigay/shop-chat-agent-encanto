@@ -13,7 +13,7 @@ class MCPClient {
    * @param {string} conversationId - ID for the current conversation
    * @param {string} shopId - ID of the Shopify shop
    */
-  constructor(hostUrl, conversationId, shopId, customerMcpEndpoint) {
+  constructor(hostUrl, conversationId, shopId, customerMcpEndpoint, buyerIp) {
     this.tools = [];
     this.customerTools = [];
     this.storefrontTools = [];
@@ -25,6 +25,7 @@ class MCPClient {
     this.customerAccessToken = "";
     this.conversationId = conversationId;
     this.shopId = shopId;
+    this.buyerIp = buyerIp || null;
   }
 
   /**
@@ -142,7 +143,8 @@ class MCPClient {
       console.log("Calling storefront tool", toolName, toolArgs);
 
       const headers = {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...(this.buyerIp ? { "Shopify-Storefront-Buyer-IP": this.buyerIp } : {}),
       };
 
       const response = await this._makeJsonRpcRequest(

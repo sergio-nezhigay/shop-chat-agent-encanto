@@ -102,6 +102,13 @@ async function handleChatRequest(request) {
     const promptType = body.prompt_type || AppConfig.api.defaultPromptType;
     const cartGid = body.cart_token ? `gid://shopify/Cart/${body.cart_token}` : null;
     const pageContext = normalizePageContext(body.page_context);
+    const buyerCountry = body.buyer_country || null;
+    const buyerCurrency = body.buyer_currency || null;
+    const buyerIp =
+      request.headers.get("CF-Connecting-IP") ||
+      request.headers.get("X-Forwarded-For")?.split(",")[0].trim() ||
+      request.headers.get("X-Real-IP") ||
+      null;
 
     // Create a stream for the response
     const responseStream = createSseStream(async (stream) => {
@@ -112,6 +119,9 @@ async function handleChatRequest(request) {
         promptType,
         cartGid,
         pageContext,
+        buyerCountry,
+        buyerCurrency,
+        buyerIp,
         stream,
       });
     });
@@ -144,6 +154,9 @@ async function handleChatSession({
   promptType,
   cartGid,
   pageContext,
+  buyerCountry,
+  buyerCurrency,
+  buyerIp,
   stream,
 }) {
   // Initialize services
@@ -163,6 +176,7 @@ async function handleChatSession({
     conversationId,
     shopId,
     mcpApiUrl,
+    buyerIp,
   );
 
   // Send conversation ID to client
@@ -261,6 +275,8 @@ async function handleChatSession({
         tools: mcpClient.tools,
         cartGid,
         pageContext,
+        buyerCountry,
+        buyerCurrency,
       },
       {
         // Handle text chunks

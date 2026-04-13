@@ -42,6 +42,8 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     tools,
     cartGid,
     pageContext,
+    buyerCountry,
+    buyerCurrency,
   }, streamHandlers) => {
     // Get system prompt from configuration or use default
     const systemInstruction = getSystemPrompt(promptType, pageContext);
@@ -51,6 +53,14 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       systemInstruction.push({
         type: "text",
         text: `<cart_context>\nThe customer already has an active cart. When calling update_cart to add or modify items, always include cart_id: "${cartGid}". Never omit cart_id or create a new cart.\n</cart_context>`,
+      });
+    }
+
+    // Inject buyer country/currency so Claude quotes prices in the correct currency
+    if (buyerCountry || buyerCurrency) {
+      systemInstruction.push({
+        type: "text",
+        text: `<buyer_context>\nThe customer is located in country "${buyerCountry || "unknown"}". Always quote prices in ${buyerCurrency || "the store's default currency"}. If a product price is returned in a different currency, note the local currency (${buyerCurrency}) instead.\n</buyer_context>`,
       });
     }
 

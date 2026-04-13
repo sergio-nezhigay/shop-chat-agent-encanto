@@ -87,7 +87,10 @@
   window.shopChatConfig = {
     promptType: 'standardAssistant',
     welcomeMessage: {{ block.settings.welcome_message | json }},
-    appUrl: 'https://shop-chat-agent-encanto-prod.fly.dev'
+    appUrl: 'https://shop-chat-agent-encanto-prod.fly.dev',
+    buyerCountry: {{ localization.country.iso_code | json }},
+    buyerCurrency: {{ localization.country.currency.iso_code | json }},
+    buyerCurrencySymbol: {{ localization.country.currency.symbol | json }}
   };
   window.shopId = {{ shop.id }};
 </script>
