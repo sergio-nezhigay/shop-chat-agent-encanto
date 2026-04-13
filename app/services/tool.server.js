@@ -63,6 +63,21 @@ export function createToolService() {
     // Check if this is a product search result
     if (toolName === AppConfig.tools.productSearchName) {
       productsToDisplay.push(...processProductSearchResult(toolUseResponse, toolArgs));
+
+      // [price-debug] Log the raw MCP content Claude will see in conversation history
+      try {
+        const rawText = toolUseResponse.content?.[0]?.text;
+        const rawData = typeof rawText === 'string' ? JSON.parse(rawText) : rawText;
+        if (rawData?.products) {
+          rawData.products.slice(0, 3).forEach((p) => {
+            const rawMin = p.price_range?.min;
+            const rawVariantPrice = p.variants?.[0]?.price;
+            console.log(`[price-debug] product="${p.title}" price_range.min=${JSON.stringify(rawMin)} variant[0].price=${JSON.stringify(rawVariantPrice)}`);
+          });
+        }
+      } catch (e) {
+        console.log('[price-debug] could not parse raw MCP content for price logging:', e.message);
+      }
     }
 
     addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
@@ -185,25 +200,36 @@ export function createToolService() {
   };
 
   /**
-   * Formats a product data object
-   * @param {Object} product - Raw product data
-   * @returns {Object} Formatted product data
+   * Converts a raw Shopify price value to a display string.
+   * MCP returns prices as {amount: integer, currency: string} where amount is
+   * in the smallest currency subunit (e.g. fils for QAR, cents for EUR).
+   * Falls back to handling legacy string formats.
    */
-  const normalizePrice = (raw) => {
-    if (raw == null) return raw;
+  const extractPrice = (raw) => {
+    if (raw == null) return null;
+
+    // Object form: {amount: 9600, currency: "QAR"} → "QAR 96.00"
+    if (typeof raw === 'object' && raw.amount != null) {
+      const major = typeof raw.amount === 'number'
+        ? (raw.amount / 100).toFixed(2)
+        : String(raw.amount).replace(',', '.');
+      console.log(`[price-debug] extractPrice object: amount=${raw.amount} currency=${raw.currency} → ${raw.currency} ${major}`);
+      return { currency: raw.currency || '', amount: major };
+    }
+
+    // String form fallback: "66,00" → "66.00"
     const str = String(raw);
-    // European decimal format (e.g. "66,00") → standard "66.00"
-    // Only convert if the comma is used as a decimal separator:
-    // pattern: digits, comma, exactly 2 digits, end-of-string
-    return /^\d+,\d{2}$/.test(str) ? str.replace(',', '.') : str;
+    const amount = /^\d+,\d{2}$/.test(str) ? str.replace(',', '.') : str;
+    console.log(`[price-debug] extractPrice string: input=${str} → ${amount}`);
+    return { currency: '', amount };
   };
 
   const formatProductData = (product) => {
-    const price = product.price_range
-      ? `${product.price_range.currency} ${normalizePrice(product.price_range.min)}`
-      : (product.variants && product.variants.length > 0
-        ? `${product.variants[0].currency} ${normalizePrice(product.variants[0].price)}`
-        : 'Price not available');
+    const priceRaw = product.price_range?.min ?? (product.variants?.[0]?.price ?? null);
+    const extracted = extractPrice(priceRaw);
+    // If price_range has a top-level currency field as fallback
+    const currency = extracted?.currency || product.price_range?.currency || product.variants?.[0]?.currency || '';
+    const price = extracted ? `${currency} ${extracted.amount}`.trim() : 'Price not available';
 
     return {
       id: product.product_id || `product-${Math.random().toString(36).substring(7)}`,
@@ -216,6 +242,47 @@ export function createToolService() {
   };
 
   /**
+   * Deep-walks a parsed JSON object and converts any Shopify money object
+   * {amount: integer, currency: string} from subunit integers to decimal strings.
+   * e.g. {amount: 9600, currency: "QAR"} → {amount: "96.00", currency: "QAR"}
+   */
+  const normalizePriceAmountsInObject = (obj) => {
+    if (Array.isArray(obj)) return obj.map(normalizePriceAmountsInObject);
+    if (obj !== null && typeof obj === 'object') {
+      // Shopify money object: {amount: number, currency: string}
+      if (typeof obj.amount === 'number' && typeof obj.currency === 'string') {
+        const major = (obj.amount / 100).toFixed(2);
+        console.log(`[price-debug] normalized money object: ${obj.amount} ${obj.currency} → ${major} ${obj.currency}`);
+        return { ...obj, amount: major };
+      }
+      const result = {};
+      for (const [key, val] of Object.entries(obj)) {
+        result[key] = normalizePriceAmountsInObject(val);
+      }
+      return result;
+    }
+    return obj;
+  };
+
+  /**
+   * Normalizes Shopify price subunit integers inside raw MCP tool response content
+   * before it enters Claude's conversation history.
+   */
+  const normalizeToolContentPrices = (content) => {
+    if (!Array.isArray(content)) return content;
+    return content.map((block) => {
+      if (block.type !== 'text' || typeof block.text !== 'string') return block;
+      try {
+        const data = JSON.parse(block.text);
+        const normalized = normalizePriceAmountsInObject(data);
+        return { ...block, text: JSON.stringify(normalized) };
+      } catch (e) {
+        return block; // not JSON, leave untouched
+      }
+    });
+  };
+
+  /**
    * Adds a tool result to the conversation history
    * @param {Array} conversationHistory - The conversation history
    * @param {string} toolUseId - The ID of the tool use request
@@ -223,12 +290,13 @@ export function createToolService() {
    * @param {string} conversationId - The conversation ID
    */
   const addToolResultToHistory = async (conversationHistory, toolUseId, content, conversationId) => {
+    const normalizedContent = normalizeToolContentPrices(content);
     const toolResultMessage = {
       role: 'user',
       content: [{
         type: "tool_result",
         tool_use_id: toolUseId,
-        content: content
+        content: normalizedContent
       }]
     };
 
