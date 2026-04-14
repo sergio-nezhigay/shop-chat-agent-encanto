@@ -4,7 +4,7 @@
  */
 import { saveMessage } from "../db.server";
 import AppConfig from "./config.server";
-import { fetchRecommendedProducts } from "./metafield.server";
+import { fetchRecommendedProductsAdmin } from "./metafield.server";
 
 /**
  * Creates a tool service instance
@@ -321,7 +321,7 @@ export function createToolService(shopDomain = null) {
             console.log(`[upsell] Could not extract handle from url="${p.url}"`);
             return null;
           }
-          const recommended = await fetchRecommendedProducts(handle, shopDomainArg);
+          const recommended = await fetchRecommendedProductsAdmin(handle, shopDomainArg);
           if (recommended.length === 0) {
             console.log(`[upsell] No recommendations found for handle="${handle}"`);
             return null;

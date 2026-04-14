@@ -13,7 +13,7 @@ import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
-import { fetchRecommendedProducts } from "../services/metafield.server";
+import { fetchRecommendedProductsAdmin } from "../services/metafield.server";
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -176,7 +176,7 @@ async function handleChatSession({
   const [{ mcpApiUrl }, pageProductRecommendations] = await Promise.all([
     getCustomerAccountUrls(shopDomain, conversationId),
     pageContext?.page_type === 'product' && pageProductHandle
-      ? fetchRecommendedProducts(pageProductHandle, shopDomain)
+      ? fetchRecommendedProductsAdmin(pageProductHandle, shopDomain)
       : Promise.resolve([]),
   ]);
 
