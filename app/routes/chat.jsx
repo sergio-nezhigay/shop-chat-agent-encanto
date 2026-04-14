@@ -13,6 +13,7 @@ import AppConfig from "../services/config.server";
 import { createSseStream } from "../services/streaming.server";
 import { createClaudeService } from "../services/claude.server";
 import { createToolService } from "../services/tool.server";
+import { fetchRecommendedProducts } from "../services/metafield.server";
 
 // Configuration: Set to true to send tool_use events for debugging UI
 const SEND_TOOL_USE_EVENTS = false;
@@ -159,17 +160,27 @@ async function handleChatSession({
   buyerIp,
   stream,
 }) {
-  // Initialize services
-  const claudeService = createClaudeService();
-  const toolService = createToolService();
-
   // Initialize MCP client
   const shopId = request.headers.get("X-Shopify-Shop-Id");
   const shopDomain = request.headers.get("Origin");
-  const { mcpApiUrl } = await getCustomerAccountUrls(
-    shopDomain,
-    conversationId,
-  );
+
+  // Initialize services
+  const claudeService = createClaudeService();
+  const toolService = createToolService(shopDomain);
+
+  // Fetch page product's curated recommendations (from custom.color_variant_products metafield)
+  // and MCP URLs in parallel to avoid added latency.
+  const pageProductHandle = pageContext?.url?.match(/\/products\/([^/?#]+)/)?.[1] ?? null;
+  console.log(`[upsell] page_type="${pageContext?.page_type}" pageProductHandle="${pageProductHandle}"`);
+
+  const [{ mcpApiUrl }, pageProductRecommendations] = await Promise.all([
+    getCustomerAccountUrls(shopDomain, conversationId),
+    pageContext?.page_type === 'product' && pageProductHandle
+      ? fetchRecommendedProducts(pageProductHandle, shopDomain)
+      : Promise.resolve([]),
+  ]);
+
+  console.log(`[upsell] pageProductRecommendations for "${pageProductHandle}":`, pageProductRecommendations);
 
   const mcpClient = new MCPClient(
     shopDomain,
@@ -275,6 +286,7 @@ async function handleChatSession({
         tools: mcpClient.tools,
         cartGid,
         pageContext,
+        pageProductRecommendations,
         buyerCountry,
         buyerCurrency,
       },

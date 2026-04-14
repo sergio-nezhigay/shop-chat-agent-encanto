@@ -6,6 +6,7 @@ import { Anthropic } from "@anthropic-ai/sdk";
 import AppConfig from "./config.server";
 import systemPrompts from "../prompts/prompts.json";
 import { makeupConsultantGuide } from "../prompts/knowledge/makeup-consultant-guide";
+import { upsellStrategy } from "../prompts/knowledge/upsell-strategy";
 import { faqKnowledgeBase } from "../prompts/knowledge/faq";
 import { cartCheckoutPattern } from "../prompts/knowledge/cart-checkout-pattern";
 
@@ -42,6 +43,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
     tools,
     cartGid,
     pageContext,
+    pageProductRecommendations,
     buyerCountry,
     buyerCurrency,
   }, streamHandlers) => {
@@ -62,6 +64,18 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
         type: "text",
         text: `<buyer_context>\nThe customer is located in country "${buyerCountry || "unknown"}". Always quote prices in ${buyerCurrency || "the store's default currency"}. If a product price is returned in a different currency, note the local currency (${buyerCurrency}) instead.\n</buyer_context>`,
       });
+    }
+
+    // Inject store-curated companion products for the product currently being viewed
+    if (Array.isArray(pageProductRecommendations) && pageProductRecommendations.length > 0) {
+      const lines = pageProductRecommendations
+        .map((p) => `- ${p.title} (${p.url})`)
+        .join("\n");
+      systemInstruction.push({
+        type: "text",
+        text: `<page_product_recommendations>\nThe product on this page has the following store-curated companion products set by the merchant:\n${lines}\nWhen applying the upsell strategy, prefer these specific products over generic suggestions.\n</page_product_recommendations>`,
+      });
+      console.log(`[upsell] Injected ${pageProductRecommendations.length} page product recommendation(s) into system prompt`);
     }
 
     // Create stream
@@ -119,6 +133,7 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
       formattingGuidelines: config.formattingGuidelines,
       cartCheckoutPattern,
       makeupConsultantGuide: makeupConsultantVariants.standard,
+      upsellStrategy,
       faqKnowledgeBase,
     };
 

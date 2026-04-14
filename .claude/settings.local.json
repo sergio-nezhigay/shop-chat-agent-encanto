@@ -47,7 +47,8 @@
       "Bash(dir \"C:\\\\projects\\\\shop-chat-agent-encanto\" /b)",
       "Bash(npm list:*)",
       "Bash(gh api:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -4,12 +4,13 @@
  */
 import { saveMessage } from "../db.server";
 import AppConfig from "./config.server";
+import { fetchRecommendedProducts } from "./metafield.server";
 
 /**
  * Creates a tool service instance
  * @returns {Object} Tool service with methods for managing tools
  */
-export function createToolService() {
+export function createToolService(shopDomain = null) {
   const CART_MUTATION_TOOL_NAMES = new Set([
     "add_to_cart",
     "clear_cart",
@@ -61,6 +62,7 @@ export function createToolService() {
    */
   const handleToolSuccess = async (toolUseResponse, toolName, toolUseId, conversationHistory, productsToDisplay, conversationId, toolArgs) => {
     // Check if this is a product search result
+    let toolContent = toolUseResponse.content;
     if (toolName === AppConfig.tools.productSearchName) {
       productsToDisplay.push(...await processProductSearchResult(toolUseResponse, toolArgs));
 
@@ -78,9 +80,13 @@ export function createToolService() {
       } catch (e) {
         console.log('[price-debug] could not parse raw MCP content for price logging:', e.message);
       }
+
+      // Enrich the content Claude sees with store-curated recommended products
+      // sourced from the `custom.color_variant_products` metafield
+      toolContent = await appendUpsellRecommendations(toolUseResponse.content, shopDomain);
     }
 
-    addToolResultToHistory(conversationHistory, toolUseId, toolUseResponse.content, conversationId);
+    addToolResultToHistory(conversationHistory, toolUseId, toolContent, conversationId);
 
     return isCartMutationTool(toolName);
   };
@@ -269,6 +275,80 @@ export function createToolService() {
     const amount = /^\d+,\d{2}$/.test(str) ? str.replace(',', '.') : str;
     console.log(`[price-debug] extractPrice string: input=${str} → ${amount}`);
     return { currency: '', amount };
+  };
+
+  /**
+   * Extracts a product handle from a Shopify product URL.
+   * e.g. "https://store.myshopify.com/products/vintage-palette" → "vintage-palette"
+   */
+  const extractHandleFromUrl = (url) => {
+    if (!url) return null;
+    const match = url.match(/\/products\/([^/?#]+)/);
+    const handle = match ? match[1] : null;
+    console.log(`[upsell] extractHandleFromUrl: url="${url}" → handle="${handle}"`);
+    return handle;
+  };
+
+  /**
+   * Appends a supplementary upsell block to the tool result content that Claude
+   * will see, sourced from the `custom.color_variant_products` metafield.
+   * If no recommendations are found or shopDomain is missing, returns content unchanged.
+   *
+   * @param {Array} content - Raw tool response content blocks
+   * @param {string|null} shopDomainArg - Shop origin URL
+   * @returns {Promise<Array>} Content with optional upsell block appended
+   */
+  const appendUpsellRecommendations = async (content, shopDomainArg) => {
+    if (!shopDomainArg || !Array.isArray(content) || content.length === 0) {
+      console.log(`[upsell] appendUpsellRecommendations skipped: shopDomain=${shopDomainArg} contentLen=${content?.length}`);
+      return content;
+    }
+
+    try {
+      // Parse products from the first text block
+      const rawText = content[0]?.text;
+      const rawData = typeof rawText === 'string' ? JSON.parse(rawText) : rawText;
+      const products = rawData?.products;
+      console.log(`[upsell] Products in search result: ${products?.length ?? 0}`);
+      if (!Array.isArray(products) || products.length === 0) return content;
+
+      // Fetch recommendations in parallel for each product
+      const enriched = await Promise.all(
+        products.slice(0, AppConfig.tools.maxProductsToDisplay).map(async (p) => {
+          console.log(`[upsell] Processing product: title="${p.title}" url="${p.url}"`);
+          const handle = extractHandleFromUrl(p.url);
+          if (!handle) {
+            console.log(`[upsell] Could not extract handle from url="${p.url}"`);
+            return null;
+          }
+          const recommended = await fetchRecommendedProducts(handle, shopDomainArg);
+          if (recommended.length === 0) {
+            console.log(`[upsell] No recommendations found for handle="${handle}"`);
+            return null;
+          }
+          return { for_product: p.title || handle, recommended };
+        })
+      );
+
+      const upsellData = enriched.filter(Boolean);
+      if (upsellData.length === 0) {
+        console.log(`[upsell] No upsell data to append — Claude will use its own expertise`);
+        return content;
+      }
+
+      console.log(`[upsell] Appending upsell block for ${upsellData.length} product(s):`, JSON.stringify(upsellData));
+
+      return [
+        ...content,
+        {
+          type: "text",
+          text: JSON.stringify({ upsell_recommendations: upsellData }),
+        },
+      ];
+    } catch (error) {
+      console.log("[upsell] Error building upsell block:", error.message);
+      return content;
+    }
   };
 
   const formatProductData = (product) => {
