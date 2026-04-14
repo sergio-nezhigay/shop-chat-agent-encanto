@@ -75,7 +75,6 @@ export function createClaudeService(apiKey = process.env.CLAUDE_API_KEY) {
         type: "text",
         text: `<page_product_recommendations>\nThe product on this page has the following store-curated companion products set by the merchant:\n${lines}\nWhen applying the upsell strategy, prefer these specific products over generic suggestions.\n</page_product_recommendations>`,
       });
-      console.log(`[upsell] Injected ${pageProductRecommendations.length} page product recommendation(s) into system prompt`);
     }
 
     // Create stream

@@ -171,7 +171,6 @@ async function handleChatSession({
   // Fetch page product's curated recommendations (from custom.color_variant_products metafield)
   // and MCP URLs in parallel to avoid added latency.
   const pageProductHandle = pageContext?.url?.match(/\/products\/([^/?#]+)/)?.[1] ?? null;
-  console.log(`[upsell] page_type="${pageContext?.page_type}" pageProductHandle="${pageProductHandle}"`);
 
   const [{ mcpApiUrl }, pageProductRecommendations] = await Promise.all([
     getCustomerAccountUrls(shopDomain, conversationId),
@@ -179,8 +178,6 @@ async function handleChatSession({
       ? fetchRecommendedProductsAdmin(pageProductHandle, shopDomain)
       : Promise.resolve([]),
   ]);
-
-  console.log(`[upsell] pageProductRecommendations for "${pageProductHandle}":`, pageProductRecommendations);
 
   const mcpClient = new MCPClient(
     shopDomain,

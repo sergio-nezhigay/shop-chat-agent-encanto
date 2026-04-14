@@ -284,9 +284,7 @@ export function createToolService(shopDomain = null) {
   const extractHandleFromUrl = (url) => {
     if (!url) return null;
     const match = url.match(/\/products\/([^/?#]+)/);
-    const handle = match ? match[1] : null;
-    console.log(`[upsell] extractHandleFromUrl: url="${url}" → handle="${handle}"`);
-    return handle;
+    return match ? match[1] : null;
   };
 
   /**
@@ -299,44 +297,26 @@ export function createToolService(shopDomain = null) {
    * @returns {Promise<Array>} Content with optional upsell block appended
    */
   const appendUpsellRecommendations = async (content, shopDomainArg) => {
-    if (!shopDomainArg || !Array.isArray(content) || content.length === 0) {
-      console.log(`[upsell] appendUpsellRecommendations skipped: shopDomain=${shopDomainArg} contentLen=${content?.length}`);
-      return content;
-    }
+    if (!shopDomainArg || !Array.isArray(content) || content.length === 0) return content;
 
     try {
-      // Parse products from the first text block
       const rawText = content[0]?.text;
       const rawData = typeof rawText === 'string' ? JSON.parse(rawText) : rawText;
       const products = rawData?.products;
-      console.log(`[upsell] Products in search result: ${products?.length ?? 0}`);
       if (!Array.isArray(products) || products.length === 0) return content;
 
-      // Fetch recommendations in parallel for each product
       const enriched = await Promise.all(
         products.slice(0, AppConfig.tools.maxProductsToDisplay).map(async (p) => {
-          console.log(`[upsell] Processing product: title="${p.title}" url="${p.url}"`);
           const handle = extractHandleFromUrl(p.url);
-          if (!handle) {
-            console.log(`[upsell] Could not extract handle from url="${p.url}"`);
-            return null;
-          }
+          if (!handle) return null;
           const recommended = await fetchRecommendedProductsAdmin(handle, shopDomainArg);
-          if (recommended.length === 0) {
-            console.log(`[upsell] No recommendations found for handle="${handle}"`);
-            return null;
-          }
+          if (recommended.length === 0) return null;
           return { for_product: p.title || handle, recommended };
         })
       );
 
       const upsellData = enriched.filter(Boolean);
-      if (upsellData.length === 0) {
-        console.log(`[upsell] No upsell data to append — Claude will use its own expertise`);
-        return content;
-      }
-
-      console.log(`[upsell] Appending upsell block for ${upsellData.length} product(s):`, JSON.stringify(upsellData));
+      if (upsellData.length === 0) return content;
 
       return [
         ...content,
@@ -346,7 +326,7 @@ export function createToolService(shopDomain = null) {
         },
       ];
     } catch (error) {
-      console.log("[upsell] Error building upsell block:", error.message);
+      console.error("[upsell] Error building upsell block:", error.message);
       return content;
     }
   };
