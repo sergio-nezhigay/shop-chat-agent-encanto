@@ -385,6 +385,21 @@ async function handleChatSession({
   // Signal end of turn
   stream.sendMessage({ type: "end_turn" });
 
+  // Detect product links in Claude's text and fetch cards for them
+  const assistantText = finalMessage.content
+    ?.filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("") ?? "";
+
+  const linkedProducts = await toolService.extractProductsFromText(assistantText, shopDomain);
+  const existingProductIds = new Set(productsToDisplay.map((p) => p.id));
+  for (const p of linkedProducts) {
+    if (!existingProductIds.has(p.id)) {
+      productsToDisplay.push(p);
+      existingProductIds.add(p.id);
+    }
+  }
+
   // Send product results if available
   if (productsToDisplay.length > 0) {
     stream.sendMessage({

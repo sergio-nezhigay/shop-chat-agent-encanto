@@ -420,11 +420,87 @@ export function createToolService(shopDomain = null) {
     }
   };
 
+  /**
+   * Scans assistant text for markdown product links (e.g. [Name](/products/handle))
+   * and fetches card data for each from Shopify's public product JSON endpoint.
+   * Used to show product cards when Claude mentions products without calling search_catalog.
+   * @param {string} text - The full assistant response text
+   * @param {string} shopOrigin - The shop origin URL (e.g. "https://store.myshopify.com")
+   * @returns {Promise<Array>} Product objects in the same shape as productsToDisplay
+   */
+  const extractProductsFromText = async (text, shopOrigin) => {
+    console.log(`[extract-products] text length=${text?.length ?? 0} shopOrigin=${shopOrigin}`);
+    if (!text || !shopOrigin) return [];
+
+    // Match both absolute (https://store.com/products/handle) and relative (/products/handle) URLs
+    const regex = /\[[^\]]+\]\(((?:https?:\/\/[^/]+)?\/products\/([^)\s"]+))\)/g;
+    const handles = [];
+    const seen = new Set();
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+      const handle = match[2];
+      if (!seen.has(handle)) {
+        seen.add(handle);
+        handles.push(handle);
+        console.log(`[extract-products] found product link: handle="${handle}" fullUrl="${match[1]}"`);
+      }
+    }
+
+    if (handles.length === 0) {
+      console.log('[extract-products] no product links found in text');
+      return [];
+    }
+
+    console.log(`[extract-products] fetching data for ${handles.length} product(s)`);
+
+    const products = await Promise.all(
+      handles.map(async (handle) => {
+        try {
+          const url = `${shopOrigin}/products/${handle}`;
+          const fetchUrl = `${url}.json`;
+          console.log(`[extract-products] fetching ${fetchUrl}`);
+          const res = await fetch(fetchUrl, {
+            headers: { Accept: 'application/json' },
+            signal: AbortSignal.timeout(3000),
+          });
+          console.log(`[extract-products] handle="${handle}" status=${res.status}`);
+          if (!res.ok) return null;
+          const data = await res.json();
+          const p = data?.product;
+          if (!p) {
+            console.log(`[extract-products] handle="${handle}" no product in response`);
+            return null;
+          }
+          const variant = p.variants?.[0];
+          const price = variant?.price ?? '';
+          const image_url = p.featured_image || p.images?.[0]?.src || '';
+          console.log(`[extract-products] handle="${handle}" title="${p.title}" price="${price}" image="${image_url ? 'present' : 'missing'}"`);
+          return {
+            id: String(p.id),
+            title: p.title || 'Product',
+            price: price,
+            image_url,
+            description: p.body_html?.replace(/<[^>]+>/g, '').slice(0, 200) || '',
+            url,
+          };
+        } catch (err) {
+          console.log(`[extract-products] handle="${handle}" fetch error: ${err.message}`);
+          return null;
+        }
+      })
+    );
+
+    const result = products.filter(Boolean);
+    console.log(`[extract-products] returning ${result.length} product card(s)`);
+    return result;
+  };
+
   return {
     handleToolError,
     handleToolSuccess,
     processProductSearchResult,
-    addToolResultToHistory
+    addToolResultToHistory,
+    extractProductsFromText,
   };
 }
 
