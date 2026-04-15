@@ -694,18 +694,71 @@
         // Create the product grid container
         const productsContainer = document.createElement("div");
         productsContainer.classList.add("shop-ai-product-grid");
-        productSection.appendChild(productsContainer);
 
         if (!products || !Array.isArray(products) || products.length === 0) {
           const noProductsMessage = document.createElement("p");
           noProductsMessage.textContent = "No products found";
           noProductsMessage.style.padding = "10px";
           productsContainer.appendChild(noProductsMessage);
+          productSection.appendChild(productsContainer);
         } else {
-          products.forEach((product) => {
-            const productCard = ShopAIChat.Product.createCard(product);
-            productsContainer.appendChild(productCard);
-          });
+          // Pagination helpers
+          function getCardsPerPage() {
+            return window.innerWidth <= 480 ? 1 : 2;
+          }
+
+          function renderPage(page) {
+            const perPage = getCardsPerPage();
+            const totalPages = Math.ceil(products.length / perPage);
+            // Remove existing cards (leave buttons in place)
+            Array.from(productsContainer.children).forEach(function (child) {
+              if (!child.classList.contains("shop-ai-page-prev") &&
+                  !child.classList.contains("shop-ai-page-next")) {
+                child.remove();
+              }
+            });
+            products
+              .slice(page * perPage, page * perPage + perPage)
+              .forEach(function (product) {
+                productsContainer.appendChild(
+                  ShopAIChat.Product.createCard(product)
+                );
+              });
+            productSection.dataset.page = page;
+            const prevBtn = productsContainer.querySelector(".shop-ai-page-prev");
+            const nextBtn = productsContainer.querySelector(".shop-ai-page-next");
+            if (prevBtn) prevBtn.style.display = page === 0 ? "none" : "flex";
+            if (nextBtn) nextBtn.style.display = page >= totalPages - 1 ? "none" : "flex";
+          }
+
+          productSection.appendChild(productsContainer);
+
+          const perPage = getCardsPerPage();
+          const totalPages = Math.ceil(products.length / perPage);
+
+          // Only add overlay nav buttons when there is more than one page
+          if (totalPages > 1) {
+            const prevBtn = document.createElement("button");
+            prevBtn.classList.add("shop-ai-page-prev");
+            prevBtn.setAttribute("aria-label", "Previous");
+            prevBtn.innerHTML = "&#8249;";
+            productsContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.classList.add("shop-ai-page-next");
+            nextBtn.setAttribute("aria-label", "Next");
+            nextBtn.innerHTML = "&#8250;";
+            productsContainer.appendChild(nextBtn);
+
+            prevBtn.addEventListener("click", function () {
+              renderPage(parseInt(productSection.dataset.page) - 1);
+            });
+            nextBtn.addEventListener("click", function () {
+              renderPage(parseInt(productSection.dataset.page) + 1);
+            });
+          }
+
+          renderPage(0);
         }
 
         this.scrollToBottom();
