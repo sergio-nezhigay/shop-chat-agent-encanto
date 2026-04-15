@@ -626,15 +626,16 @@
 .shop-ai-cards-track {
   display: flex;
   flex-direction: row;
-  width: calc(var(--total-pages, 1) * 100%);
+  /* width set via JS to totalPages * containerWidth px */
   transition: transform 0.28s ease;
 }
 
 .shop-ai-page-group {
-  flex: 0 0 calc(100% / var(--total-pages, 1));
+  flex-shrink: 0;
   display: flex;
   flex-direction: row;
   gap: 12px;
+  /* width set via JS to containerWidth px */
 }
 
 /* Overlay pagination arrow buttons */

@@ -710,16 +710,23 @@
           const perPage = getCardsPerPage();
           const totalPages = Math.ceil(products.length / perPage);
 
+          // Append to DOM first so we can measure real pixel width.
+          // productsContainer.clientWidth returns 0 (child % not yet resolved),
+          // but productSection.clientWidth is correct after the append.
+          productSection.appendChild(productsContainer);
+          const pageWidth = productSection.clientWidth;
+
           // Inner track — pre-render all pages upfront so images load immediately
           const cardsTrack = document.createElement("div");
           cardsTrack.classList.add("shop-ai-cards-track");
-          cardsTrack.style.setProperty("--total-pages", totalPages);
+          cardsTrack.style.width = (totalPages * pageWidth) + "px";
           productsContainer.appendChild(cardsTrack);
 
           // Build all page groups at once — no DOM mutations during animation
           for (var p = 0; p < totalPages; p++) {
             const group = document.createElement("div");
             group.classList.add("shop-ai-page-group");
+            group.style.width = pageWidth + "px";
             products
               .slice(p * perPage, p * perPage + perPage)
               .forEach(function (product) {
@@ -729,14 +736,11 @@
           }
 
           function goToPage(page) {
-            cardsTrack.style.transform =
-              "translateX(-" + (page * (100 / totalPages)) + "%)";
+            cardsTrack.style.transform = "translateX(-" + (page * pageWidth) + "px)";
             productSection.dataset.page = page;
             if (prevBtn) prevBtn.style.display = page === 0 ? "none" : "flex";
             if (nextBtn) nextBtn.style.display = page >= totalPages - 1 ? "none" : "flex";
           }
-
-          productSection.appendChild(productsContainer);
 
           // Only add overlay nav buttons when there is more than one page
           var prevBtn = null;
