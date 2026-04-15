@@ -467,12 +467,12 @@
 
 .shop-ai-chat-input {
   border: 1px solid #D4CFC8;
-  border-radius: 999px;
+  border-radius: 24px;
   margin: 12px 16px 16px;
   padding: 6px 12px 6px 16px;
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: flex-end;
   background-color: #fff;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -482,17 +482,21 @@
   box-shadow: 0px 0px 20px 0px rgba(201, 169, 110, 0.12);
 }
 
-.shop-ai-chat-input input {
+.shop-ai-chat-input textarea {
   flex: 1;
   border: none !important;
   padding: 8px 0 !important;
   font-size: 14px;
-
   outline: none;
   background: transparent;
   min-height: 24px;
+  max-height: 120px;
   margin-bottom: 0;
   box-shadow: none !important;
+  resize: none;
+  overflow-y: auto;
+  line-height: 1.5;
+  font-family: inherit;
 }
 
 .shop-ai-input-icons {
@@ -541,7 +545,7 @@
 }
 
 @media (max-width: 480px) {
-  .shop-ai-chat-input input {
+  .shop-ai-chat-input textarea {
     font-size: 16px;
   }
 }
