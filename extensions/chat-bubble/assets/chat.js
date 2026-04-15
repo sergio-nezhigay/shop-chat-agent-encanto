@@ -728,34 +728,8 @@
             if (nextBtn) nextBtn.style.display = page >= totalPages - 1 ? "none" : "flex";
           }
 
-          function renderPage(page, direction) {
-            if (!direction) {
-              swapCards(page);
-              return;
-            }
-            var enterX = direction === "next" ? "60px" : "-60px";
-
-            // 1. Fade out cards in place (buttons unaffected)
-            cardsTrack.style.transition = "opacity 0.15s ease";
-            cardsTrack.style.opacity    = "0";
-
-            setTimeout(function () {
-              // 2. Swap cards while invisible
-              swapCards(page);
-
-              // 3. Snap track to enter-side offset (no transition)
-              cardsTrack.style.transition = "none";
-              cardsTrack.style.transform  = "translateX(" + enterX + ")";
-
-              // 4. Double rAF commits the snap before slide-in transition fires
-              requestAnimationFrame(function () {
-                requestAnimationFrame(function () {
-                  cardsTrack.style.transition = "opacity 0.22s ease, transform 0.28s ease";
-                  cardsTrack.style.opacity    = "1";
-                  cardsTrack.style.transform  = "translateX(0)";
-                });
-              });
-            }, 150);
+          function renderPage(page) {
+            swapCards(page);
           }
 
           productSection.appendChild(productsContainer);
@@ -778,10 +752,10 @@
             productsContainer.appendChild(nextBtn);
 
             prevBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) - 1, "prev");
+              renderPage(parseInt(productSection.dataset.page) - 1);
             });
             nextBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) + 1, "next");
+              renderPage(parseInt(productSection.dataset.page) + 1);
             });
           }
 

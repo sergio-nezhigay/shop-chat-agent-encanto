@@ -648,7 +648,7 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
-  transition: opacity 0.15s, box-shadow 0.15s;
+  /* transition removed to prevent card blinking during pagination */
   padding: 0;
 }
 
@@ -674,9 +674,7 @@
   flex: 0 0 calc(50% - 6px);
   min-width: 0;
   overflow: hidden;
-  transition:
-    transform 0.2s,
-    box-shadow 0.2s;
+  /* transition removed to prevent card blinking during pagination */
   display: block;
   border: 1px solid #E1E1E1;
   position: relative;
