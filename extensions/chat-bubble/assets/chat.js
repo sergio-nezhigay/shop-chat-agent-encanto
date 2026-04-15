@@ -707,59 +707,62 @@
             return window.innerWidth <= 480 ? 1 : 2;
           }
 
-          // Inner track — only this element animates, buttons stay outside it
+          const perPage = getCardsPerPage();
+          const totalPages = Math.ceil(products.length / perPage);
+
+          // Inner track — pre-render all pages upfront so images load immediately
           const cardsTrack = document.createElement("div");
           cardsTrack.classList.add("shop-ai-cards-track");
+          cardsTrack.style.setProperty("--total-pages", totalPages);
           productsContainer.appendChild(cardsTrack);
 
-          function swapCards(page) {
-            const perPage = getCardsPerPage();
-            const totalPages = Math.ceil(products.length / perPage);
-            cardsTrack.innerHTML = "";
+          // Build all page groups at once — no DOM mutations during animation
+          for (var p = 0; p < totalPages; p++) {
+            const group = document.createElement("div");
+            group.classList.add("shop-ai-page-group");
             products
-              .slice(page * perPage, page * perPage + perPage)
+              .slice(p * perPage, p * perPage + perPage)
               .forEach(function (product) {
-                cardsTrack.appendChild(ShopAIChat.Product.createCard(product));
+                group.appendChild(ShopAIChat.Product.createCard(product));
               });
+            cardsTrack.appendChild(group);
+          }
+
+          function goToPage(page) {
+            cardsTrack.style.transform =
+              "translateX(-" + (page * (100 / totalPages)) + "%)";
             productSection.dataset.page = page;
-            const prevBtn = productsContainer.querySelector(".shop-ai-page-prev");
-            const nextBtn = productsContainer.querySelector(".shop-ai-page-next");
             if (prevBtn) prevBtn.style.display = page === 0 ? "none" : "flex";
             if (nextBtn) nextBtn.style.display = page >= totalPages - 1 ? "none" : "flex";
           }
 
-          function renderPage(page) {
-            swapCards(page);
-          }
-
           productSection.appendChild(productsContainer);
 
-          const perPage = getCardsPerPage();
-          const totalPages = Math.ceil(products.length / perPage);
-
           // Only add overlay nav buttons when there is more than one page
+          var prevBtn = null;
+          var nextBtn = null;
           if (totalPages > 1) {
-            const prevBtn = document.createElement("button");
+            prevBtn = document.createElement("button");
             prevBtn.classList.add("shop-ai-page-prev");
             prevBtn.setAttribute("aria-label", "Previous");
             prevBtn.innerHTML = '<svg width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 1L1 6l5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             productsContainer.appendChild(prevBtn);
 
-            const nextBtn = document.createElement("button");
+            nextBtn = document.createElement("button");
             nextBtn.classList.add("shop-ai-page-next");
             nextBtn.setAttribute("aria-label", "Next");
             nextBtn.innerHTML = '<svg width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l5 5-5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             productsContainer.appendChild(nextBtn);
 
             prevBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) - 1);
+              goToPage(parseInt(productSection.dataset.page) - 1);
             });
             nextBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) + 1);
+              goToPage(parseInt(productSection.dataset.page) + 1);
             });
           }
 
-          renderPage(0);
+          goToPage(0);
         }
 
         this.scrollToBottom();

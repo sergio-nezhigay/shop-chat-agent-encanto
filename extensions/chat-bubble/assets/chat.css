@@ -626,8 +626,15 @@
 .shop-ai-cards-track {
   display: flex;
   flex-direction: row;
+  width: calc(var(--total-pages, 1) * 100%);
+  transition: transform 0.28s ease;
+}
+
+.shop-ai-page-group {
+  flex: 0 0 calc(100% / var(--total-pages, 1));
+  display: flex;
+  flex-direction: row;
   gap: 12px;
-  width: 100%;
 }
 
 /* Overlay pagination arrow buttons */
