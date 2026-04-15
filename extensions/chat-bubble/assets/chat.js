@@ -1630,7 +1630,7 @@
         // Add click handler for the button
         button.addEventListener("click", function () {
           // Send message to add this product to cart
-          const input = document.querySelector(".shop-ai-chat-input input");
+          const input = document.querySelector(".shop-ai-chat-input textarea");
           if (input) {
             input.value = `Add ${product.title} to my cart`;
             // Trigger a click on the send button
