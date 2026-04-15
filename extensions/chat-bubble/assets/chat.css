@@ -624,6 +624,7 @@
   width: 100%;
   background-color: transparent;
   position: relative;
+  overflow: hidden;
 }
 
 /* Overlay pagination arrow buttons */

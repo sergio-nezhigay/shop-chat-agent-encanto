@@ -707,10 +707,9 @@
             return window.innerWidth <= 480 ? 1 : 2;
           }
 
-          function renderPage(page) {
+          function swapCards(page) {
             const perPage = getCardsPerPage();
             const totalPages = Math.ceil(products.length / perPage);
-            // Remove existing cards (leave buttons in place)
             Array.from(productsContainer.children).forEach(function (child) {
               if (!child.classList.contains("shop-ai-page-prev") &&
                   !child.classList.contains("shop-ai-page-next")) {
@@ -729,6 +728,20 @@
             const nextBtn = productsContainer.querySelector(".shop-ai-page-next");
             if (prevBtn) prevBtn.style.display = page === 0 ? "none" : "flex";
             if (nextBtn) nextBtn.style.display = page >= totalPages - 1 ? "none" : "flex";
+          }
+
+          function renderPage(page, direction) {
+            if (!direction) {
+              swapCards(page);
+              return;
+            }
+            // Fade out, swap cards, fade back in
+            productsContainer.style.transition = "opacity 0.15s ease";
+            productsContainer.style.opacity = "0";
+            setTimeout(function () {
+              swapCards(page);
+              productsContainer.style.opacity = "1";
+            }, 150);
           }
 
           productSection.appendChild(productsContainer);
@@ -751,10 +764,10 @@
             productsContainer.appendChild(nextBtn);
 
             prevBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) - 1);
+              renderPage(parseInt(productSection.dataset.page) - 1, "prev");
             });
             nextBtn.addEventListener("click", function () {
-              renderPage(parseInt(productSection.dataset.page) + 1);
+              renderPage(parseInt(productSection.dataset.page) + 1, "next");
             });
           }
 
