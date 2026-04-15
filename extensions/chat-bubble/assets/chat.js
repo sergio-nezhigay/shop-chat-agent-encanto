@@ -735,12 +735,28 @@
               swapCards(page);
               return;
             }
-            // Fade out, swap cards, fade back in
+            var enterX = direction === "next" ? "60px" : "-60px";
+
+            // 1. Fade out in place — no slide, so cards don't drift through wrong slots
             productsContainer.style.transition = "opacity 0.15s ease";
-            productsContainer.style.opacity = "0";
+            productsContainer.style.opacity   = "0";
+
             setTimeout(function () {
+              // 2. Swap cards while invisible
               swapCards(page);
-              productsContainer.style.opacity = "1";
+
+              // 3. Snap new cards to the enter-side offset (no transition)
+              productsContainer.style.transition = "none";
+              productsContainer.style.transform = "translateX(" + enterX + ")";
+
+              // 4. Double rAF commits the snap before the slide-in transition fires
+              requestAnimationFrame(function () {
+                requestAnimationFrame(function () {
+                  productsContainer.style.transition = "opacity 0.22s ease, transform 0.28s ease";
+                  productsContainer.style.opacity   = "1";
+                  productsContainer.style.transform = "translateX(0)";
+                });
+              });
             }, 150);
           }
 
