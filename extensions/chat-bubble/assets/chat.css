@@ -748,7 +748,11 @@
 /* Responsive adjustments for small screens */
 @media (max-width: 480px) {
   .shop-ai-product-grid {
-    padding: 5px;
+    padding: 5px 0;
+  }
+
+  .shop-ai-product-card {
+    flex: 0 0 100%;
   }
 
   .shop-ai-add-to-cart {
