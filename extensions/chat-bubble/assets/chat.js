@@ -707,21 +707,19 @@
             return window.innerWidth <= 480 ? 1 : 2;
           }
 
+          // Inner track — only this element animates, buttons stay outside it
+          const cardsTrack = document.createElement("div");
+          cardsTrack.classList.add("shop-ai-cards-track");
+          productsContainer.appendChild(cardsTrack);
+
           function swapCards(page) {
             const perPage = getCardsPerPage();
             const totalPages = Math.ceil(products.length / perPage);
-            Array.from(productsContainer.children).forEach(function (child) {
-              if (!child.classList.contains("shop-ai-page-prev") &&
-                  !child.classList.contains("shop-ai-page-next")) {
-                child.remove();
-              }
-            });
+            cardsTrack.innerHTML = "";
             products
               .slice(page * perPage, page * perPage + perPage)
               .forEach(function (product) {
-                productsContainer.appendChild(
-                  ShopAIChat.Product.createCard(product)
-                );
+                cardsTrack.appendChild(ShopAIChat.Product.createCard(product));
               });
             productSection.dataset.page = page;
             const prevBtn = productsContainer.querySelector(".shop-ai-page-prev");
@@ -737,24 +735,24 @@
             }
             var enterX = direction === "next" ? "60px" : "-60px";
 
-            // 1. Fade out in place — no slide, so cards don't drift through wrong slots
-            productsContainer.style.transition = "opacity 0.15s ease";
-            productsContainer.style.opacity   = "0";
+            // 1. Fade out cards in place (buttons unaffected)
+            cardsTrack.style.transition = "opacity 0.15s ease";
+            cardsTrack.style.opacity    = "0";
 
             setTimeout(function () {
               // 2. Swap cards while invisible
               swapCards(page);
 
-              // 3. Snap new cards to the enter-side offset (no transition)
-              productsContainer.style.transition = "none";
-              productsContainer.style.transform = "translateX(" + enterX + ")";
+              // 3. Snap track to enter-side offset (no transition)
+              cardsTrack.style.transition = "none";
+              cardsTrack.style.transform  = "translateX(" + enterX + ")";
 
-              // 4. Double rAF commits the snap before the slide-in transition fires
+              // 4. Double rAF commits the snap before slide-in transition fires
               requestAnimationFrame(function () {
                 requestAnimationFrame(function () {
-                  productsContainer.style.transition = "opacity 0.22s ease, transform 0.28s ease";
-                  productsContainer.style.opacity   = "1";
-                  productsContainer.style.transform = "translateX(0)";
+                  cardsTrack.style.transition = "opacity 0.22s ease, transform 0.28s ease";
+                  cardsTrack.style.opacity    = "1";
+                  cardsTrack.style.transform  = "translateX(0)";
                 });
               });
             }, 150);

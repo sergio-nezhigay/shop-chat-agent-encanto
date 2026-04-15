@@ -617,14 +617,17 @@
 
 /* Product Grid Styling */
 .shop-ai-product-grid {
+  position: relative;
+  padding: 5px 0;
+  width: 100%;
+  overflow: hidden;
+}
+
+.shop-ai-cards-track {
   display: flex;
   flex-direction: row;
   gap: 12px;
-  padding: 5px 0;
   width: 100%;
-  background-color: transparent;
-  position: relative;
-  overflow: hidden;
 }
 
 /* Overlay pagination arrow buttons */
