@@ -633,20 +633,18 @@
   top: 40%;
   transform: translateY(-50%);
   z-index: 2;
-  background: white;
-  border: 1px solid #d8d8d8;
+  background: #232222;
+  border: none;
   border-radius: 50%;
-  width: 26px;
-  height: 26px;
-  font-size: 16px;
-  line-height: 1;
+  width: 30px;
+  height: 30px;
   cursor: pointer;
-  color: #444;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 1px 4px rgb(0 0 0 / 0.15);
-  transition: box-shadow 0.15s, background 0.15s;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.35);
+  transition: opacity 0.15s, box-shadow 0.15s;
   padding: 0;
 }
 
@@ -660,8 +658,8 @@
 
 .shop-ai-page-prev:hover,
 .shop-ai-page-next:hover {
-  background: #f5f5f5;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 0.2);
+  opacity: 0.85;
+  box-shadow: 0 3px 12px rgb(0 0 0 / 0.45);
 }
 
 /* Product Card Styling */

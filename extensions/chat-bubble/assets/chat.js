@@ -741,13 +741,13 @@
             const prevBtn = document.createElement("button");
             prevBtn.classList.add("shop-ai-page-prev");
             prevBtn.setAttribute("aria-label", "Previous");
-            prevBtn.innerHTML = "&#8249;";
+            prevBtn.innerHTML = '<svg width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 1L1 6l5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             productsContainer.appendChild(prevBtn);
 
             const nextBtn = document.createElement("button");
             nextBtn.classList.add("shop-ai-page-next");
             nextBtn.setAttribute("aria-label", "Next");
-            nextBtn.innerHTML = "&#8250;";
+            nextBtn.innerHTML = '<svg width="7" height="12" viewBox="0 0 7 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 1l5 5-5 5" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
             productsContainer.appendChild(nextBtn);
 
             prevBtn.addEventListener("click", function () {
