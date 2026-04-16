@@ -418,6 +418,7 @@
           sendButton: container.querySelector(".shop-ai-chat-send"),
           backButton: container.querySelector(".shop-ai-chat-back"),
           messagesContainer: container.querySelector(".shop-ai-chat-messages"),
+          scrollBottomBtn: container.querySelector(".shop-ai-scroll-bottom"),
         };
 
         // Detect mobile device
@@ -517,6 +518,9 @@
         // Handle window resize to adjust scrolling
         window.addEventListener("resize", () => this.scrollToBottom());
 
+        // Set up scroll-to-bottom button
+        this.setupScrollListener();
+
         // Add global click handler for auth links
         document.addEventListener("click", function (event) {
           if (
@@ -528,6 +532,33 @@
               ShopAIChat.Auth.openAuthPopup(window.shopAuthUrl);
             }
           }
+        });
+      },
+
+      /**
+       * Setup scroll-to-bottom button visibility based on scroll position
+       */
+      setupScrollListener: function () {
+        const { messagesContainer, scrollBottomBtn } = this.elements;
+        if (!messagesContainer || !scrollBottomBtn) return;
+
+        messagesContainer.addEventListener("scroll", () => {
+          const threshold = 80;
+          const distanceFromBottom =
+            messagesContainer.scrollHeight -
+            messagesContainer.scrollTop -
+            messagesContainer.clientHeight;
+
+          if (distanceFromBottom > threshold) {
+            scrollBottomBtn.classList.add("visible");
+          } else {
+            scrollBottomBtn.classList.remove("visible");
+          }
+        });
+
+        scrollBottomBtn.addEventListener("click", () => {
+          this.scrollToBottom();
+          scrollBottomBtn.classList.remove("visible");
         });
       },
 
