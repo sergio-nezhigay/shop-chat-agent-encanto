@@ -557,7 +557,7 @@
         });
 
         scrollBottomBtn.addEventListener("click", () => {
-          this.scrollToBottom();
+          this.scrollToBottom(true);
           scrollBottomBtn.classList.remove("visible");
         });
       },
@@ -670,10 +670,14 @@
       /**
        * Scroll messages container to bottom
        */
-      scrollToBottom: function () {
+      scrollToBottom: function (smooth) {
         const { messagesContainer } = this.elements;
         setTimeout(() => {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          if (smooth) {
+            messagesContainer.scrollTo({ top: messagesContainer.scrollHeight, behavior: "smooth" });
+          } else {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          }
         }, 100);
       },
 
