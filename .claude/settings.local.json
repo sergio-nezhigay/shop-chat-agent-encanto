@@ -48,7 +48,10 @@
       "Bash(npm list:*)",
       "Bash(gh api:*)",
       "Bash(git log:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(grep *)",
+      "Bash(fly help *)",
+      "Bash(fly ssh *)"
     ]
   },
   "enableAllProjectMcpServers": true,

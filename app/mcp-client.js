@@ -157,7 +157,9 @@ class MCPClient {
         headers
       );
 
-      return response.result || response;
+      const result = response.result || response;
+      console.log(`[mcp-storefront] raw result for ${toolName}: isError=${result.isError} content blocks=${result.content?.length ?? 0}`);
+      return result;
     } catch (error) {
       console.error(`Error calling tool ${toolName}:`, error);
       throw error;
@@ -206,7 +208,9 @@ class MCPClient {
           headers
         );
 
-        return response.result || response;
+        const result = response.result || response;
+        console.log(`[mcp-customer] raw result for ${toolName}: isError=${result.isError} content blocks=${result.content?.length ?? 0}`);
+        return result;
       } catch (error) {
         // Handle 401 specifically to trigger authentication
         if (error.status === 401) {

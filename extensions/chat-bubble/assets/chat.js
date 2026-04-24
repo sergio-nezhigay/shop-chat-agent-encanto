@@ -8,6 +8,25 @@
   "use strict";
 
   // ---------------------------------------------------------------------------
+  // Debug flag — set to true (or run `window.__shopChatDebug=true` in console
+  // and reload) to use sessionStorage instead of localStorage, giving each tab
+  // its own fresh conversation and disabling cross-tab persistence.
+  // ---------------------------------------------------------------------------
+  const DEBUG_MODE = true;
+
+  const Storage = {
+    get: (key) => (DEBUG_MODE ? sessionStorage : localStorage).getItem(key),
+    set: (key, value) =>
+      (DEBUG_MODE ? sessionStorage : localStorage).setItem(key, value),
+    remove: (key) =>
+      (DEBUG_MODE ? sessionStorage : localStorage).removeItem(key),
+  };
+
+  if (DEBUG_MODE) {
+    console.info("[ShopAIChat] DEBUG_MODE on — cross-tab persistence disabled");
+  }
+
+  // ---------------------------------------------------------------------------
   // Scripted FAQ flow data
   // ---------------------------------------------------------------------------
 
@@ -652,8 +671,8 @@
         ShopAIChat.Flow.endFlow();
 
         // Clear conversation storage
-        localStorage.removeItem("shopAiConversationId");
-        localStorage.removeItem("shopAiLastMessage");
+        Storage.remove("shopAiConversationId");
+        Storage.remove("shopAiLastMessage");
 
         // Re-initialize with welcome message and starters
         const welcomeMessage =
@@ -819,7 +838,7 @@
        */
       send: async function (chatInput, messagesContainer) {
         const userMessage = chatInput.value.trim();
-        const conversationId = localStorage.getItem("shopAiConversationId");
+        const conversationId = Storage.get("shopAiConversationId");
 
         // Remove initial gradient state when conversation starts
         ShopAIChat.UI.markInteractionStarted();
@@ -1255,7 +1274,7 @@
         switch (data.type) {
           case "id":
             if (data.conversation_id) {
-              localStorage.setItem(
+              Storage.set(
                 "shopAiConversationId",
                 data.conversation_id,
               );
@@ -1307,7 +1326,7 @@
 
           case "auth_required":
             // Save the last user message for resuming after authentication
-            localStorage.setItem("shopAiLastMessage", userMessage || "");
+            Storage.set("shopAiLastMessage", userMessage || "");
             break;
 
           case "product_results":
@@ -1451,7 +1470,7 @@
           );
 
           // Clear the conversation ID since we couldn't fetch this conversation
-          localStorage.removeItem("shopAiConversationId");
+          Storage.remove("shopAiConversationId");
         }
       },
     },
@@ -1501,7 +1520,7 @@
         }
 
         // Start polling for token availability
-        const conversationId = localStorage.getItem("shopAiConversationId");
+        const conversationId = Storage.get("shopAiConversationId");
         if (conversationId) {
           const messagesContainer = document.querySelector(
             ".shop-ai-chat-messages",
@@ -1528,13 +1547,13 @@
 
         console.log("Starting token polling for conversation:", conversationId);
         const pollingId = "polling_" + Date.now();
-        localStorage.setItem("shopAiTokenPollingId", pollingId);
+        Storage.set("shopAiTokenPollingId", pollingId);
 
         let attemptCount = 0;
         const maxAttempts = 30;
 
         const poll = async () => {
-          if (localStorage.getItem("shopAiTokenPollingId") !== pollingId) {
+          if (Storage.get("shopAiTokenPollingId") !== pollingId) {
             console.log(
               "Another polling session has started, stopping this one",
             );
@@ -1563,10 +1582,10 @@
 
             if (data.status === "authorized") {
               console.log("Token available, resuming conversation");
-              const message = localStorage.getItem("shopAiLastMessage");
+              const message = Storage.get("shopAiLastMessage");
 
               if (message) {
-                localStorage.removeItem("shopAiLastMessage");
+                Storage.remove("shopAiLastMessage");
                 setTimeout(() => {
                   ShopAIChat.Message.add(
                     "Authorization successful! I'm now continuing with your request.",
@@ -1582,7 +1601,7 @@
                 }, 500);
               }
 
-              localStorage.removeItem("shopAiTokenPollingId");
+              Storage.remove("shopAiTokenPollingId");
               return;
             }
 
@@ -1811,7 +1830,7 @@
         this.CartSync.install();
 
         // Check for existing conversation
-        const conversationId = localStorage.getItem("shopAiConversationId");
+        const conversationId = Storage.get("shopAiConversationId");
 
       if (conversationId) {
         // Fetch conversation history

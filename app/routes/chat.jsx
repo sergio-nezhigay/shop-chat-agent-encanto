@@ -321,6 +321,8 @@ async function handleChatSession({
           const toolArgs = content.input;
           const toolUseId = content.id;
 
+          console.log(`[tool] → ${toolName}`, JSON.stringify(toolArgs));
+
           if (SEND_TOOL_USE_EVENTS) {
             const toolUseMessage = `Calling tool: ${toolName} with arguments: ${JSON.stringify(toolArgs)}`;
 
@@ -338,6 +340,7 @@ async function handleChatSession({
 
           // Handle tool response based on success/error
           if (toolUseResponse.error) {
+            console.log(`[tool] ← ${toolName} ERROR:`, JSON.stringify(toolUseResponse.error));
             await toolService.handleToolError(
               toolUseResponse,
               toolName,
@@ -347,6 +350,12 @@ async function handleChatSession({
               conversationId,
             );
           } else {
+            const rawContent = toolUseResponse.content;
+            const preview = Array.isArray(rawContent)
+              ? rawContent.map((b) => (b.text ?? JSON.stringify(b)).slice(0, 300)).join(' | ')
+              : String(rawContent ?? '').slice(0, 300);
+            console.log(`[tool] ← ${toolName} OK (${Array.isArray(rawContent) ? rawContent.length : 1} block(s)):`, preview);
+
             const cartChanged = await toolService.handleToolSuccess(
               toolUseResponse,
               toolName,
