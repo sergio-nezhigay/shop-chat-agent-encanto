@@ -339,7 +339,7 @@ export function createToolService(shopDomain = null) {
     const price = extracted ? `${currency} ${extracted.amount}`.trim() : 'Price not available';
 
     return {
-      id: product.product_id || `product-${Math.random().toString(36).substring(7)}`,
+      id: String(product.id || product.product_id || '').replace(/^gid:\/\/shopify\/Product\//, '') || product.url || `product-${Math.random().toString(36).substring(7)}`,
       title: product.title || 'Product',
       price: price,
       image_url: product.image_url || '',
