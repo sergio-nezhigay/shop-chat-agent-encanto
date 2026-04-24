@@ -409,11 +409,19 @@ async function handleChatSession({
     }
   }
 
+  // Deduplicate products accumulated across multiple tool calls in this turn
+  const seenIds = new Set();
+  const uniqueProducts = productsToDisplay.filter((p) => {
+    if (seenIds.has(p.id)) return false;
+    seenIds.add(p.id);
+    return true;
+  });
+
   // Send product results if available
-  if (productsToDisplay.length > 0) {
+  if (uniqueProducts.length > 0) {
     stream.sendMessage({
       type: "product_results",
-      products: productsToDisplay,
+      products: uniqueProducts,
     });
 
     // Persist product results to database so they show in archive/history
@@ -423,7 +431,7 @@ async function handleChatSession({
       JSON.stringify([
         {
           type: "product_results",
-          products: productsToDisplay,
+          products: uniqueProducts,
         },
       ]),
     ).catch((error) => {
